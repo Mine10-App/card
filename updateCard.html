@@ -321,21 +321,23 @@ printBtn.addEventListener("click", ()=>{
     </div>`;
 
     html+=`<table><thead><tr>
-      <th>Name</th>
-      <th>Pax</th>
-      <th>FQTV</th>
-      <th>Serial No</th>
-      <th>Remarks</th>
-    </tr></thead><tbody>`;
+  <th>Name</th>
+  <th>Seat No</th>
+  <th>Pax</th>
+  <th>FQTV</th>
+  <th>Serial No</th>
+  <th>Remarks</th>
+</tr></thead><tbody>`;
 
-    passengers.forEach(p=>{
-      html+=`<tr>
-        <td>${p.name||""}</td>
-        <td>${p.numPax||0}</td>
-        <td>${p.fqtv||""}</td>
-        <td>${p.serial||""}</td>
-        <td>${p.remarks||""}</td>
-      </tr>`;
+passengers.forEach(p=>{
+  html+=`<tr>
+    <td>${p.name||""}</td>
+    <td>${p.seatNo||""}</td>
+    <td>${p.numPax||0}</td>
+    <td>${p.fqtv||""}</td>
+    <td>${p.serial||""}</td>
+    <td>${p.remarks||""}</td>
+  </tr>`;
     });
 
     html += `
@@ -344,7 +346,7 @@ printBtn.addEventListener("click", ()=>{
     <tr>
         <td colspan="1"><strong>Total</strong></td>
         <td colspan="1"><strong>${totalPax}</strong></td>
-        <td colspan="3"></td>
+        <td colspan="4"></td>
     </tr>
     </tfoot>
     </table>
