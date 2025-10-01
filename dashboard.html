@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #f8f9fa;
+}
+header {
+  background: #007bff;
+  color: white;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+header h1 { margin: 0; font-size: 20px; }
+header .user { font-size: 14px; }
+.shift-info {
+  margin: 15px;
+  padding: 12px;
+  background: white;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  color: #333;
+}
+main {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+button {
+  background: white;
+  border: 1px solid #007bff;
+  padding: 20px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #007bff;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+button:hover {
+  background: #007bff;
+  color: white;
+}
+button:disabled {
+  background: #ddd;
+  border-color: #ccc;
+  color: #999;
+  cursor: not-allowed;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Dashboard</h1>
+  <div class="user">Welcome, <span id="username"></span></div>
+</header>
+
+<div class="shift-info">
+  Current Shift: <span id="shiftName">Loading...</span>
+</div>
+
+<main>
+  <button id="passengerEntryBtn" onclick="openPage('card.html')">Passenger Entry</button>
+  <button onclick="openPage('updateCard.html')">Passenger Report</button>
+  <button onclick="openPage('report.html')">Daily Shift Report</button>
+  <button onclick="openPage('flightManagement.html')">Flight Management</button>
+  <button onclick="openPage('login.html')">Logout</button>
+  <button onclick="openPage('shiftman.html')">Shift Management</button>
+</main>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="fire.js"></script>
+
+<script>
+// ----------- Get logged-in user from localStorage -----------
+const userData = JSON.parse(localStorage.getItem("loggedInUser"));
+if (userData) {
+  document.getElementById("username").textContent = userData.name || userData.username;
+} else {
+  window.location.href = "login.html";
+}
+
+const today = new Date().toISOString().split("T")[0]; // yyyy-mm-dd
+
+// ----------- Fetch current shift from Firestore -----------
+async function fetchCurrentShift() {
+  try {
+    const snapshot = await db.collection("shifts").limit(1).get();
+
+    let shiftLabel = "No Shift Open";
+    let enableEntry = false;
+
+    if (!snapshot.empty) {
+      const docRef = snapshot.docs[0].ref;
+      const data = snapshot.docs[0].data();
+
+      // Handle date change if both shifts were closed yesterday
+      if (data.date !== today && 
+          data.shift1?.status === "Closed" && 
+          data.shift2?.status === "Closed") {
+
+        await docRef.update({
+          date: today,
+          "shift1.status": "Pending",
+          "shift1.openedAt": "",
+          "shift1.closedAt": "",
+          "shift2.status": "Pending",
+          "shift2.openedAt": "",
+          "shift2.closedAt": ""
+        });
+
+        data.date = today;
+        data.shift1.status = "Pending";
+        data.shift2.status = "Pending";
+      }
+
+      // Determine which shift is open
+      if (data.shift1?.status === "Open") {
+        shiftLabel = "Morning Shift";
+        enableEntry = true;
+      } else if (data.shift2?.status === "Open") {
+        shiftLabel = "Evening Shift";
+        enableEntry = true;
+      }
+    }
+
+    document.getElementById("shiftName").textContent = shiftLabel;
+    document.getElementById("passengerEntryBtn").disabled = !enableEntry;
+
+  } catch (err) {
+    console.error("Error fetching shift:", err);
+    document.getElementById("shiftName").textContent = "Error loading shift";
+    document.getElementById("passengerEntryBtn").disabled = true;
+  }
+}
+
+// Initial fetch and auto-refresh every 10 seconds
+fetchCurrentShift();
+setInterval(fetchCurrentShift, 10000);
+
+// ----------- Navigation function -----------
+function openPage(page){
+  window.location.href = page;
+}
+</script>
+
+</body>
+</html>

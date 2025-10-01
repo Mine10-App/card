@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Shift Management</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f8f9fa;
+  margin: 0;
+  padding: 20px;
+}
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.shift-box {
+  background: white;
+  padding: 20px;
+  margin: 10px auto;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 300px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.shift-box h2 {
+  margin: 0 0 10px 0;
+  font-size: 20px;
+}
+button {
+  display: block;
+  width: 100%;
+  margin: 8px 0;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+}
+.open-btn { background: #28a745; color: white; }
+.close-btn { background: #dc3545; color: white; }
+.reopen-btn { background: #ffc107; color: black; }
+button:disabled {
+  background: #ddd;
+  color: #666;
+  cursor: not-allowed;
+}
+</style>
+</head>
+<body>
+
+<h1>Shift Management</h1>
+
+<div class="shift-box">
+  <h2>Shift 1</h2>
+  <button id="openShift1" class="open-btn">Open Shift 1</button>
+  <button id="closeShift1" class="close-btn" style="display:none;">Close Shift 1</button>
+  <button id="reopenShift1" class="reopen-btn" style="display:none;">Reopen Shift 1</button>
+</div>
+
+<div class="shift-box">
+  <h2>Shift 2</h2>
+  <button id="openShift2" class="open-btn" disabled>Open Shift 2</button>
+  <button id="closeShift2" class="close-btn" style="display:none;">Close Shift 2</button>
+  <button id="reopenShift2" class="reopen-btn" style="display:none;">Reopen Shift 2</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="fire.js"></script>
+
+<script>
+const dbRef = db.collection("shifts");
+const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+
+// --- Elements ---
+const openShift1Btn = document.getElementById("openShift1");
+const closeShift1Btn = document.getElementById("closeShift1");
+const reopenShift1Btn = document.getElementById("reopenShift1");
+const openShift2Btn = document.getElementById("openShift2");
+const closeShift2Btn = document.getElementById("closeShift2");
+const reopenShift2Btn = document.getElementById("reopenShift2");
+
+// --- Load shift status ---
+async function loadShifts() {
+  const snapshot = await dbRef.where("date","==",today).get();
+
+  let shift1 = null, shift2 = null;
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    if(data.shiftNo === 1) shift1 = {id: doc.id, ...data};
+    if(data.shiftNo === 2) shift2 = {id: doc.id, ...data};
+  });
+
+  // --- Shift 1 ---
+  if(!shift1) {
+    openShift1Btn.style.display = "block";
+    closeShift1Btn.style.display = "none";
+    reopenShift1Btn.style.display = "none";
+    openShift1Btn.disabled = false;
+  } else if(shift1.status === "Open") {
+    openShift1Btn.style.display = "none";
+    closeShift1Btn.style.display = "block";
+    reopenShift1Btn.style.display = "none";
+  } else if(shift1.status === "Closed") {
+    openShift1Btn.style.display = "none";
+    closeShift1Btn.style.display = "none";
+    reopenShift1Btn.style.display = "block";
+    openShift2Btn.disabled = false; // enable shift2
+  }
+
+  // --- Shift 2 ---
+  if(!shift2) {
+    openShift2Btn.style.display = "block";
+    closeShift2Btn.style.display = "none";
+    reopenShift2Btn.style.display = "none";
+    openShift2Btn.disabled = !shift1 || shift1.status !== "Closed"; // enable only after shift1 closed
+  } else if(shift2.status === "Open") {
+    openShift2Btn.style.display = "none";
+    closeShift2Btn.style.display = "block";
+    reopenShift2Btn.style.display = "none";
+  } else if(shift2.status === "Closed") {
+    openShift2Btn.style.display = "none";
+    closeShift2Btn.style.display = "none";
+    reopenShift2Btn.style.display = "block";
+  }
+}
+
+// --- Open Shift ---
+async function openShift(no) {
+  await dbRef.add({
+    date: today,
+    shiftNo: no,
+    status: "Open",
+    openedAt: new Date().toLocaleString()
+  });
+  loadShifts();
+}
+
+// --- Close Shift ---
+async function closeShift(id) {
+  await dbRef.doc(id).update({
+    status: "Closed",
+    closedAt: new Date().toLocaleString()
+  });
+  loadShifts();
+}
+
+// --- Reopen Shift (with password) ---
+async function reopenShift(id) {
+  const password = prompt("Enter special password to reopen shift:");
+  if(password === "admin123") { // 🔑 special password
+    await dbRef.doc(id).update({
+      status: "Open",
+      reopenedAt: new Date().toLocaleString()
+    });
+    loadShifts();
+  } else {
+    alert("Invalid password! Shift not reopened.");
+  }
+}
+
+// --- Attach Events ---
+openShift1Btn.onclick = () => openShift(1);
+openShift2Btn.onclick = () => openShift(2);
+
+closeShift1Btn.onclick = async () => {
+  const snapshot = await dbRef.where("date","==",today).where("shiftNo","==",1).limit(1).get();
+  if(!snapshot.empty) closeShift(snapshot.docs[0].id);
+};
+
+closeShift2Btn.onclick = async () => {
+  const snapshot = await dbRef.where("date","==",today).where("shiftNo","==",2).limit(1).get();
+  if(!snapshot.empty) closeShift(snapshot.docs[0].id);
+};
+
+reopenShift1Btn.onclick = async () => {
+  const snapshot = await dbRef.where("date","==",today).where("shiftNo","==",1).limit(1).get();
+  if(!snapshot.empty) reopenShift(snapshot.docs[0].id);
+};
+
+reopenShift2Btn.onclick = async () => {
+  const snapshot = await dbRef.where("date","==",today).where("shiftNo","==",2).limit(1).get();
+  if(!snapshot.empty) reopenShift(snapshot.docs[0].id);
+};
+
+// --- Initial load ---
+loadShifts();
+</script>
+</body>
+</html>
