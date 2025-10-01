@@ -105,7 +105,7 @@ tr:hover {background: rgba(37,99,235,0.02);}
 <div class="card">
 <div class="card-header">
 <div class="card-title">Passenger List</div>
-<div class="passenger-count" id="passengerCount">0 passengers</div>
+<div class="passenger-count" id="passengerCount">0 Count</div>
 </div>
 
 <div class="table-container">
@@ -269,7 +269,11 @@ lastPaxLeft:lastPaxTimeInput.value
 updateFlightButtonLabel(); updateGlobalStatus(); });
 
 fetchBtn.addEventListener("click", fetchPassengers); filterDate.addEventListener("change", populateFlights);
+// Get logged-in user
+const userData = JSON.parse(localStorage.getItem("loggedInUser"));
+let loggedInUserName = userData ? (userData.name || userData.username) : "__________________";
 
+// Ge
 // Print report (updated layout)
 printBtn.addEventListener("click", ()=>{
     if(passengers.length===0){ alert("No passengers to print!"); return; }
@@ -344,9 +348,9 @@ passengers.forEach(p=>{
     </tbody>
     <tfoot>
     <tr>
-        <td colspan="1"><strong>Total</strong></td>
+        <td colspan="2"><strong>Total</strong></td>
         <td colspan="1"><strong>${totalPax}</strong></td>
-        <td colspan="4"></td>
+        <td colspan="3"></td>
     </tr>
     </tfoot>
     </table>
@@ -356,7 +360,7 @@ passengers.forEach(p=>{
     </div>
 
     <div class="footer" style="margin-top:20px; display:flex; justify-content:space-between; font-size:12px;">
-        <div>Prepared By: __________________</div>
+        <div>Prepared By: ${loggedInUserName}</div>
         <div>Checked By: __________________</div>
     </div>
     </body>
