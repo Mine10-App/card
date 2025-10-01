@@ -547,13 +547,19 @@
 
         // ---------- Fetch passengers ----------
         let passengerList = [];
+
         async function fetchPassengers(){
-            const snapshot = await db.collection("passengers").orderBy("timeAdded").get();
-            passengerList = snapshot.docs.map(doc=>({ ...doc.data(), id: doc.id }));
+            const snapshot = await db.collection("passengers")
+                .orderBy("timeAdded", "desc")
+                .get();
+
+            passengerList = snapshot.docs
+                .map(doc => ({ ...doc.data(), id: doc.id }))
+                .filter(p => p.approved !== true);   // ✅ keeps both `false` and `undefined`
+
             renderPassengers();
             updateStats();
         }
-
         // ---------- Render Table ----------
         function renderPassengers(){
             if (passengerList.length === 0) {
