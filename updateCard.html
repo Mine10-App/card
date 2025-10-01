@@ -338,13 +338,27 @@ printBtn.addEventListener("click", ()=>{
       </tr>`;
     });
 
-    html+=`</tbody></table>
-    <div style="margin-top:10px;"><strong>Total Pax: ${totalPax}</strong></div>
-    <div class="footer">
-      <div>Prepared By: __________________</div>
-      <div>Checked By: __________________</div>
+    html += `
+    </tbody>
+    <tfoot>
+    <tr>
+        <td colspan="1"><strong>Total</strong></td>
+        <td colspan="1"><strong>${totalPax}</strong></td>
+        <td colspan="3"></td>
+    </tr>
+    </tfoot>
+    </table>
+
+    <div style="margin-top:10px; font-size:11px; color:#555;">
+        Any discrepancy should be notified within 48 hours. Any delay claims will not be accepted.
     </div>
-    </body></html>`;
+
+    <div class="footer" style="margin-top:20px; display:flex; justify-content:space-between; font-size:12px;">
+        <div>Prepared By: __________________</div>
+        <div>Checked By: __________________</div>
+    </div>
+    </body>
+    </html>`;
 
     printWindow.document.write(html);
     printWindow.document.close();
