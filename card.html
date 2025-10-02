@@ -89,7 +89,7 @@
         
         /* Larger action buttons */
         .actions-cell {display:flex; gap:8px;}
-        .icon-btn {background:none; border:none; cursor:pointer; padding:6px; border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--secondary); width:32px; height:32px;}
+        .icon-btn {background:none; border:none; cursor:pointer; padding:6px; border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--secondary); width:36px; height:36px;}
         .icon-btn:hover {background:var(--light); color:var(--dark);}
         .save-btn {color:var(--success);}
         .save-btn:hover {background:rgba(16,185,129,0.1);}
@@ -160,6 +160,31 @@
             100% { transform: rotate(360deg); }
         }
         
+        /* New styles for the redesigned table */
+        .status-filter-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .status-filter-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--secondary);
+        }
+        .status-filter {
+            width: auto;
+            min-width: 140px;
+        }
+        .single-date-filter {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .single-date-filter input {
+            width: auto;
+        }
+        
         @media (max-width: 1024px) {
             .main-content {grid-template-columns: 1fr;}
             .passenger-list-card, .passenger-form-card {grid-column: 1 / 2;}
@@ -176,9 +201,6 @@
             .date-filter {flex-wrap: wrap;}
             .top-right-nav {align-items: flex-start;}
         }
-        #searchInput {
-    display: none;
-}
     </style>
 </head>
 <body>
@@ -236,7 +258,7 @@
     </header>
 
     <div class="main-content">
-        <!-- Passenger Entry Card - Left Side (Larger) -->
+        <!-- Passenger Entry Card - Left Side -->
         <div class="card passenger-form-card">
             <div class="card-header">
                 <div class="card-title">Quick Passenger Entry</div>
@@ -337,11 +359,21 @@
             </form>
         </div>
 
-        <!-- Passenger Table Card - Right Side -->
-        <div class="card passenger-list-card">
+        <!-- Passenger Table Card - Right Side (Larger) -->
+        <div class="card passenger-list-card" style="min-height: 600px;">
             <div class="card-header">
                 <div class="card-title">Passenger List</div>
-                <div class="passenger-count">Total: <span id="paxCount">0</span> Cards</div>
+                <div class="passenger-count">Total: <span id="paxCount">0</span> Passengers</div>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="status-filter-container">
+                <span class="status-filter-label">Status:</span>
+                <select class="filter-select status-filter" id="statusFilter">
+                    <option value="all">All Passengers</option>
+                    <option value="pending">Pending Approvals</option>
+                    <option value="approved">Approved</option>
+                </select>
             </div>
 
             <!-- Table Actions -->
@@ -351,12 +383,9 @@
                         <input type="text" id="searchInput" class="compact-input" style="width: auto;" placeholder="Search passengers...">
                     </div>
                     <div class="filter-group">
-                        <div class="date-filter-container">
-                            <div class="date-filter">
-                                <input type="date" id="dateFrom" class="compact-input" style="width: auto;">
-                                <input type="date" id="dateTo" class="compact-input" style="width: auto;">
-                                <button type="button" class="btn-outline" id="applyDateFilter" style="width: auto; padding: 6px 10px;">Apply</button>
-                            </div>
+                        <div class="single-date-filter">
+                            <input type="date" id="dateFilter" class="compact-input" style="width: auto;">
+                            <button type="button" class="btn-outline" id="applyDateFilter" style="width: auto; padding: 6px 10px;">Apply</button>
                         </div>
                         <select class="filter-select compact-input" id="shiftFilter">
                             <option value="all">All Shifts</option>
@@ -378,13 +407,6 @@
                 </button>
             </div>
 
-            <!-- Tabs for different views -->
-            <div class="tabs">
-                <div class="tab active" data-tab="all">All Passengers</div>
-                <div class="tab" data-tab="pending">Pending Approval</div>
-                <div class="tab" data-tab="approved">Approved</div>
-            </div>
-
             <div class="table-container">
                 <table id="passengerTable">
                     <thead>
@@ -399,6 +421,7 @@
                             <th>Remarks</th>
                             <th>Pax</th>
                             <th>Check-In</th>
+                            <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -465,13 +488,12 @@ const shiftTime = document.getElementById("shiftTime");
 const emptyState = document.getElementById("emptyState");
 const globalStatusBadge = document.getElementById("globalStatusBadge");
 const searchInput = document.getElementById("searchInput");
-const dateFrom = document.getElementById("dateFrom");
-const dateTo = document.getElementById("dateTo");
+const dateFilter = document.getElementById("dateFilter");
 const applyDateFilter = document.getElementById("applyDateFilter");
 const shiftFilter = document.getElementById("shiftFilter");
 const airlineFilter = document.getElementById("airlineFilter");
+const statusFilter = document.getElementById("statusFilter");
 const exportBtn = document.getElementById("exportBtn");
-const tabs = document.querySelectorAll(".tab");
 const totalPassengers = document.getElementById("totalPassengers");
 const todayPassengers = document.getElementById("todayPassengers");
 const activeFlights = document.getElementById("activeFlights");
@@ -485,14 +507,13 @@ let isShiftOpen = false;
 // Track if current entry is from QR scan
 let isQREntry = false;
 
-// Track current active tab
-let currentTab = "all";
+// Track current status filter
+let currentStatusFilter = "all";
 
 // Set current date
 const today = new Date().toISOString().split("T")[0];
 form.date.value = today;
-dateFrom.value = today;
-dateTo.value = today;
+dateFilter.value = today;
 
 // ----------- Fetch current shift from Firestore -----------
 async function fetchCurrentShift() {
@@ -602,8 +623,8 @@ async function fetchPassengers(){
             .orderBy("timeAdded","desc").get();
         passengerList = snapshot.docs.map(doc=>({...doc.data(), id:doc.id}));
         
-        // Apply current tab filter
-        applyTabFilter();
+        // Apply current status filter
+        applyStatusFilter();
         
         updateStats();
         populateAirlineFilter();
@@ -612,15 +633,15 @@ async function fetchPassengers(){
     }
 }
 
-// Apply tab-based filtering
-function applyTabFilter() {
-    if (currentTab === "all") {
-        // Show only passengers without approval:true
+// Apply status-based filtering
+function applyStatusFilter() {
+    if (currentStatusFilter === "all") {
+        // Show all passengers
+        filteredPassengerList = [...passengerList];
+    } else if (currentStatusFilter === "pending") {
+        // Show only unapproved passengers
         filteredPassengerList = passengerList.filter(p => p.approved !== true);
-    } else if (currentTab === "pending") {
-        // Same as all - show unapproved
-        filteredPassengerList = passengerList.filter(p => p.approved !== true);
-    } else if (currentTab === "approved") {
+    } else if (currentStatusFilter === "approved") {
         // Show only approved passengers
         filteredPassengerList = passengerList.filter(p => p.approved === true);
     }
@@ -631,7 +652,7 @@ function applyTabFilter() {
 
 // Apply search, date, shift, and airline filters
 function applyAdditionalFilters() {
-    let result = [...filteredPassengerList]; // Start with tab-filtered list
+    let result = [...filteredPassengerList]; // Start with status-filtered list
     
     // Search filter
     const searchTerm = searchInput.value.toLowerCase();
@@ -645,15 +666,9 @@ function applyAdditionalFilters() {
     }
     
     // Date filter
-    const dateFromValue = dateFrom.value;
-    const dateToValue = dateTo.value;
-    if(dateFromValue && dateToValue){
-        result = result.filter(p => {
-            const pDate = new Date(p.date);
-            const fromDate = new Date(dateFromValue);
-            const toDate = new Date(dateToValue);
-            return pDate >= fromDate && pDate <= toDate;
-        });
+    const dateFilterValue = dateFilter.value;
+    if(dateFilterValue){
+        result = result.filter(p => p.date === dateFilterValue);
     }
     
     // Shift filter
@@ -732,10 +747,36 @@ function renderPassengers(){
             row.appendChild(td);
         });
         
+        // Check-in time in 24-hour format
         const tdTime = document.createElement("td");
-        tdTime.textContent=p.timeAdded;
+        // Convert time to 24-hour format if needed
+        let timeValue = p.timeAdded;
+        if (timeValue && timeValue.includes(' ')) {
+            // Convert from AM/PM to 24-hour format
+            const [timePart, period] = timeValue.split(' ');
+            let [hours, minutes] = timePart.split(':');
+            hours = parseInt(hours);
+            
+            if (period === 'PM' && hours < 12) {
+                hours += 12;
+            } else if (period === 'AM' && hours === 12) {
+                hours = 0;
+            }
+            
+            timeValue = `${hours.toString().padStart(2, '0')}:${minutes}`;
+        }
+        tdTime.textContent = timeValue;
         row.appendChild(tdTime);
         
+        // Status column
+        const tdStatus = document.createElement("td");
+        const statusBadge = document.createElement("span");
+        statusBadge.className = `status-badge ${p.approved ? "status-open" : "status-closed"}`;
+        statusBadge.textContent = p.approved ? "Approved" : "Pending";
+        tdStatus.appendChild(statusBadge);
+        row.appendChild(tdStatus);
+        
+        // Actions column with larger buttons
         const tdAction=document.createElement("td");
         tdAction.className="actions-cell";
         
@@ -743,7 +784,7 @@ function renderPassengers(){
         if (p.approved !== true) {
             const saveBtn=document.createElement("button");
             saveBtn.className="icon-btn save-btn";
-            saveBtn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>`;
+            saveBtn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>`;
             saveBtn.title="Save/Approve passenger";
             saveBtn.onclick=async ()=>{
                 try {
@@ -760,7 +801,7 @@ function renderPassengers(){
         
         const deleteBtn=document.createElement("button");
         deleteBtn.className="icon-btn delete-btn";
-        deleteBtn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
+        deleteBtn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
         deleteBtn.title="Delete passenger";
         deleteBtn.onclick=async ()=>{
             if(confirm("Are you sure?")){
@@ -884,6 +925,10 @@ async function addPassengerAutomatically(){
         return;
     }
 
+    // Get current time in 24-hour format
+    const now = new Date();
+    const timeAdded = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
     const passenger = {
         date: form.date.value,
         shift: currentShift,
@@ -895,7 +940,7 @@ async function addPassengerAutomatically(){
         serial: document.getElementById("serial").value,
         remarks: document.getElementById("remarks").value,
         numPax: parseInt(numPaxField.value) || 1,
-        timeAdded: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+        timeAdded: timeAdded,
         approved: false
     };
 
@@ -945,6 +990,10 @@ async function addPassengerManually(){
         return;
     }
 
+    // Get current time in 24-hour format
+    const now = new Date();
+    const timeAdded = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
     const passenger = {
         date: form.date.value,
         shift: currentShift,
@@ -956,7 +1005,7 @@ async function addPassengerManually(){
         serial: document.getElementById("serial").value,
         remarks: document.getElementById("remarks").value,
         numPax: parseInt(numPaxField.value) || 1,
-        timeAdded: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+        timeAdded: timeAdded,
         approved: false
     };
 
@@ -1101,21 +1150,14 @@ searchInput.addEventListener("input", applyAdditionalFilters);
 applyDateFilter.addEventListener("click", applyAdditionalFilters);
 shiftFilter.addEventListener("change", applyAdditionalFilters);
 airlineFilter.addEventListener("change", applyAdditionalFilters);
-
-// Tab functionality
-tabs.forEach(tab => {
-    tab.addEventListener("click", () => {
-        tabs.forEach(t => t.classList.remove("active"));
-        tab.classList.add("active");
-        
-        currentTab = tab.getAttribute("data-tab");
-        applyTabFilter();
-    });
+statusFilter.addEventListener("change", () => {
+    currentStatusFilter = statusFilter.value;
+    applyStatusFilter();
 });
 
 // Export functionality
 exportBtn.addEventListener("click", () => {
-    const headers = ["Date", "Shift", "Airline", "Flight No", "Name", "Seat", "FQTV", "Serial", "Remarks", "No. of Pax", "Time Added"];
+    const headers = ["Date", "Shift", "Airline", "Flight No", "Name", "Seat", "FQTV", "Serial", "Remarks", "No. of Pax", "Time Added", "Status"];
     const csvContent = [
         headers.join(","),
         ...filteredPassengerList.map(p => [
@@ -1129,7 +1171,8 @@ exportBtn.addEventListener("click", () => {
             p.serial,
             p.remarks,
             p.numPax,
-            p.timeAdded
+            p.timeAdded,
+            p.approved ? "Approved" : "Pending"
         ].join(","))
     ].join("\n");
     
@@ -1157,11 +1200,12 @@ db.collection("passengers")
     .onSnapshot((snapshot) => {
         passengerList = snapshot.docs.map(doc => ({...doc.data(), id:doc.id}));
         
-        // Apply current tab filter to the updated data
-        applyTabFilter();
+        // Apply current status filter to the updated data
+        applyStatusFilter();
         
         updateStats();
         populateAirlineFilter();
-    });</script>
+    });
+</script>
 </body>
 </html>
