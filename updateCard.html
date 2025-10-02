@@ -907,8 +907,8 @@ toggleFlightBtn.onclick = async () => {
             // Update existing flight info
             await db.collection("flightInfo").doc(flightDocId).update({
                 status: newStatus,
-                firstPax: firstPaxTimeInput.value,
                 std: stdTimeInput.value,
+                firstPax: firstPaxTimeInput.value,
                 lastPaxLeft: lastPaxTimeInput.value
             });
         } else {
@@ -917,8 +917,8 @@ toggleFlightBtn.onclick = async () => {
                 date: filterDate.value,
                 flightNo: filterFlight.value,
                 status: newStatus,
-                firstPax: firstPaxTimeInput.value,
                 std: stdTimeInput.value,
+                firstPax: firstPaxTimeInput.value,
                 lastPaxLeft: lastPaxTimeInput.value
             });
             flightDocId = docRef.id;
@@ -946,9 +946,10 @@ printBtn.addEventListener("click", () => {
 
     const flightNo = filterFlight.value;
     const dateVal = filterDate.value;
+    const std = stdTimeInput.value || "--:--";
     const firstPax = firstPaxTimeInput.value || "--:--";
     const lastPax = lastPaxTimeInput.value || "--:--";
-    const std = stdTimeInput.value || "--:--";
+    
     const shift = passengers.length > 0 ? passengers[0].shift || "--" : "--";
     const airline = passengers.length > 0 ? passengers[0].airline || "--" : "--";
     const totalPax = passengers.reduce((sum, p) => sum + (p.numPax || 0), 0);
@@ -984,15 +985,16 @@ printBtn.addEventListener("click", () => {
       <div class="header-left">
         <strong>${companyName}</strong><br>
         <strong>${companyaddress}</strong><br>
-        <strong>${companyphone}</strong><br>
+        <strong>${companyphone}</strong><br><br>
         Airline: ${airline}<br>
         Flight No: ${flightNo}<br>
         Date: ${formattedDate}<br>
       </div>
       <div class="header-right">
+        STD: ${std}<br>
         First Pax: ${firstPax}<br>
         Last Pax: ${lastPax}<br>
-        STD: ${std}<br>
+        
         Shift: ${shift}
       </div>
     </div>`;
