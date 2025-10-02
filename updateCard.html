@@ -74,6 +74,7 @@ body {
     gap: 10px;
     font-size: 14px;
     color: var(--secondary);
+    display: none;
 }
 
 .company-logo {
@@ -93,38 +94,9 @@ body {
     gap: 12px;
 }
 
-/* Toolbar */
+/* Toolbar - Removed as buttons are moved to header */
 .toolbar {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-}
-
-.toolbar a {
-    padding: 10px 16px;
-    font-size: 14px;
-    border-radius: var(--radius);
-    cursor: pointer;
-    border: none;
-    background: var(--card-bg);
-    color: var(--secondary);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    box-shadow: var(--shadow);
-    transition: var(--transition);
-    text-decoration: none;
-}
-
-.toolbar a:hover {
-    background: var(--hover);
-    color: var(--dark);
-}
-
-.toolbar a.active {
-    background: var(--primary);
-    color: white;
+    display: none;
 }
 
 /* Main Content */
@@ -471,6 +443,65 @@ tr:hover {
     }
 
 }
+
+/* New styles for the redesigned layout */
+.small-card {
+    padding: 16px;
+}
+
+.small-card .card-header {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+}
+
+.small-card .form-group {
+    margin-bottom: 12px;
+}
+
+.small-card .form-row {
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.save-time-btn {
+    margin-top: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+}
+
+/* Header buttons styling */
+.header-buttons {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+    margin-right: 16px;
+}
+
+.header-buttons a {
+    padding: 8px 12px;
+    font-size: 13px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    border: none;
+    background: var(--card-bg);
+    color: var(--secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+    text-decoration: none;
+}
+
+.header-buttons a:hover {
+    background: var(--hover);
+    color: var(--dark);
+}
+
+.header-buttons a.active {
+    background: var(--primary);
+    color: white;
+}
 </style>
 </head>
 <body>
@@ -478,9 +509,14 @@ tr:hover {
     <!-- Header -->
     <div class="header">
         <h1><i class="fas fa-plane"></i> Flight Passenger Management</h1>
+        <div class="header-buttons">
+            <a href="dashboard.html" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="shiftend.html"><i class="fas fa-file-alt"></i> Shift End Report</a>
+            <a href="card.html" class="btn-outline"><i class="fas fa-user-plus"></i> Passenger Entry</a>
+        </div>
         <div class="company-info">
-            <div class="company-logo" id="companyLogo">C</div>
-            <span id="companyName">Company Name</span>
+            <div class="company-logo" id="companyLogo"></div>
+            <span id="companyName"></span>
         </div>
         <div class="user-actions">
             <button class="btn btn-outline"><i class="fas fa-user"></i> <span id="loggedInUser">Loading...</span></button>
@@ -488,16 +524,10 @@ tr:hover {
         </div>
     </div>
 
-    <!-- Toolbar -->
-    <div class="toolbar">
-        <a href="dashboard.html" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-        <a href="shiftend.html"><i class="fas fa-file-alt"></i> Shift End Report</a>
-    </div>
-
     <div class="main-content">
         <div class="left-column">
-            <!-- Flight Selection Card -->
-            <div class="card">
+            <!-- Flight Selection Card - Made smaller -->
+            <div class="card small-card">
                 <div class="card-header">
                     <div class="card-title"><i class="fas fa-search"></i> Flight Selection</div>
                 </div>
@@ -608,6 +638,7 @@ const loggedInUserElement = document.getElementById("loggedInUser");
 
 let passengers = [], flightDocId = null, flightStatus = "Open", flightListener = null;
 let loggedInUserName = "Loading...";
+let autoSaveTimeout = null;
 
 // Default date
 const today = new Date();
@@ -634,6 +665,10 @@ function setupTimeInputs() {
             } else {
                 e.target.value = value;
             }
+            
+            // Auto-save after user stops typing (1 second delay)
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(saveFlightTimes, 1000);
         });
         
         // Validate on blur
@@ -648,6 +683,9 @@ function setupTimeInputs() {
                 const formattedHours = hours.padStart(2, '0');
                 const formattedMinutes = minutes.padStart(2, '0');
                 e.target.value = `${formattedHours}:${formattedMinutes}`;
+                
+                // Save immediately on blur
+                saveFlightTimes();
             }
         });
     });
@@ -722,6 +760,27 @@ async function populateFlights() {
     }
 }
 
+// Find earliest check-in time from passengers
+function findEarliestCheckinTime() {
+    if (passengers.length === 0) return null;
+    
+    // Filter only approved passengers
+    const approvedPassengers = passengers.filter(p => p.approved === true);
+    if (approvedPassengers.length === 0) return null;
+    
+    // Find the earliest check-in time
+    let earliestTime = null;
+    approvedPassengers.forEach(p => {
+        if (p.checkinTime) {
+            if (!earliestTime || p.checkinTime < earliestTime) {
+                earliestTime = p.checkinTime;
+            }
+        }
+    });
+    
+    return earliestTime;
+}
+
 // Listen flight info
 function listenFlightInfo(dateVal, flightVal) {
     if (flightListener) flightListener();
@@ -745,12 +804,30 @@ function listenFlightInfo(dateVal, flightVal) {
                     flightStatus = data.status || "Open";
                     stdTimeInput.value = data.std || "";
                     lastPaxTimeInput.value = data.lastPaxLeft || "";
-                    firstPaxTimeInput.value = data.firstPax || "";
+                    
+                    // Only set first passenger time if it's not already set in Firebase
+                    // Otherwise, use the earliest check-in time from passengers
+                    if (data.firstPax) {
+                        firstPaxTimeInput.value = data.firstPax;
+                    } else {
+                        const earliestTime = findEarliestCheckinTime();
+                        if (earliestTime) {
+                            firstPaxTimeInput.value = earliestTime;
+                        } else {
+                            firstPaxTimeInput.value = "";
+                        }
+                    }
+                    
                     updateFlightButtonLabel();
                 } else {
                     flightDocId = null;
                     flightStatus = "Open";
-                    stdTimeInput.value = lastPaxTimeInput.value = firstPaxTimeInput.value = "";
+                    stdTimeInput.value = lastPaxTimeInput.value = "";
+                    
+                    // Set first passenger time from earliest check-in
+                    const earliestTime = findEarliestCheckinTime();
+                    firstPaxTimeInput.value = earliestTime || "";
+                    
                     updateFlightButtonLabel();
                 }
             }, error => {
@@ -759,7 +836,11 @@ function listenFlightInfo(dateVal, flightVal) {
                 flightStatus = "Open";
                 stdTimeInput.value = "14:30";
                 lastPaxTimeInput.value = "14:15";
-                firstPaxTimeInput.value = "12:45";
+                
+                // Set first passenger time from earliest check-in
+                const earliestTime = findEarliestCheckinTime();
+                firstPaxTimeInput.value = earliestTime || "12:45";
+                
                 updateFlightButtonLabel();
             });
     } catch (error) {
@@ -767,19 +848,23 @@ function listenFlightInfo(dateVal, flightVal) {
     }
 }
 
-// Render table
+// Render table - Only show approved transactions
 function renderTable() {
     tableBody.innerHTML = "";
-    if (passengers.length === 0) {
+    
+    // Filter to show only approved passengers
+    const approvedPassengers = passengers.filter(p => p.approved === true);
+    
+    if (approvedPassengers.length === 0) {
         emptyState.style.display = "block";
         passengerCount.textContent = "0 Passengers";
         return;
     }
     
     emptyState.style.display = "none";
-    passengerCount.textContent = `${passengers.length} Passenger${passengers.length !== 1 ? 's' : ''}`;
+    passengerCount.textContent = `${approvedPassengers.length} Passenger${approvedPassengers.length !== 1 ? 's' : ''}`;
     
-    passengers.forEach((p, index) => {
+    approvedPassengers.forEach((p, index) => {
         const row = document.createElement("tr");
         
         ["name", "seatNo", "numPax", "flightNo", "airline", "fqtv", "serial", "checkinTime"].forEach(field => {
@@ -877,6 +962,47 @@ function updateFlightButtonLabel() {
     closedWarning.style.display = flightStatus === "Closed" ? "flex" : "none";
 }
 
+// Save flight times automatically
+async function saveFlightTimes() {
+    if (!filterFlight.value) {
+        return;
+    }
+    
+    // Validate times
+    const times = [firstPaxTimeInput.value, lastPaxTimeInput.value, stdTimeInput.value];
+    for (let time of times) {
+        if (time && !isValidTime(time)) {
+            return; // Don't save invalid times
+        }
+    }
+    
+    try {
+        if (flightDocId) {
+            // Update existing flight info
+            await db.collection("flightInfo").doc(flightDocId).update({
+                std: stdTimeInput.value,
+                firstPax: firstPaxTimeInput.value,
+                lastPaxLeft: lastPaxTimeInput.value
+            });
+        } else {
+            // Create new flight info
+            const docRef = await db.collection("flightInfo").add({
+                date: filterDate.value,
+                flightNo: filterFlight.value,
+                status: "Open",
+                std: stdTimeInput.value,
+                firstPax: firstPaxTimeInput.value,
+                lastPaxLeft: lastPaxTimeInput.value
+            });
+            flightDocId = docRef.id;
+        }
+        
+        console.log("Flight times saved automatically");
+    } catch (error) {
+        console.error("Error saving flight times:", error);
+    }
+}
+
 // Toggle flight
 toggleFlightBtn.onclick = async () => {
     if (!filterFlight.value) {
@@ -932,15 +1058,18 @@ toggleFlightBtn.onclick = async () => {
     }
 }
 
-// Print report (updated layout)
+// Print report (Professional layout)
 printBtn.addEventListener("click", () => {
     if (flightStatus !== "Closed") {
         alert("You must close the flight before printing the report.");
         return;
     }
 
-    if (passengers.length === 0) { 
-        alert("No passengers to print!"); 
+    // Filter to show only approved passengers
+    const approvedPassengers = passengers.filter(p => p.approved === true);
+    
+    if (approvedPassengers.length === 0) { 
+        alert("No approved passengers to print!"); 
         return; 
     }
 
@@ -950,13 +1079,20 @@ printBtn.addEventListener("click", () => {
     const firstPax = firstPaxTimeInput.value || "--:--";
     const lastPax = lastPaxTimeInput.value || "--:--";
     
-    const shift = passengers.length > 0 ? passengers[0].shift || "--" : "--";
-    const airline = passengers.length > 0 ? passengers[0].airline || "--" : "--";
-    const totalPax = passengers.reduce((sum, p) => sum + (p.numPax || 0), 0);
+    const shift = approvedPassengers.length > 0 ? approvedPassengers[0].shift || "--" : "--";
+    const airline = approvedPassengers.length > 0 ? approvedPassengers[0].airline || "--" : "--";
+    const totalPax = approvedPassengers.reduce((sum, p) => sum + (p.numPax || 0), 0);
 
+    // Get company info from Co.js
     const companyName = companyInfo?.name || "Company Name";
     const companyaddress = companyInfo?.address || "Company Address";
-    const companyphone = companyInfo?.phone || "Company phone";
+    const companyphone = companyInfo?.phone || "Company Phone";
+    const companylogo = companyInfo?.logo || "C";
+
+    // Calculate summary statistics
+    const totalFlights = 1; // Current flight
+    const totalPassengers = approvedPassengers.length;
+    const totalEntries = approvedPassengers.reduce((sum, p) => sum + (p.numPax || 1), 0);
 
     // Format date to dd/mm/yyyy
     const dateObj = new Date(dateVal);
@@ -966,56 +1102,240 @@ printBtn.addEventListener("click", () => {
         dateObj.getFullYear();
 
     let printWindow = window.open("", "_blank");
-    let html = `<html><head><title>Flight ${flightNo}</title>
+    let html = `<html><head><title>Flight ${flightNo} Report</title>
     <style>
-      body { font-family: sans-serif; padding: 16px; }
-      .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
-      .header-left { line-height: 1.5; }
-      .header-right { line-height: 1.5; text-align: right; }
-      h2 { text-align: center; margin-bottom: 16px; }
-      table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-      th, td { border: 1px solid #000; padding: 8px; text-align: left; }
-      th { background: #eee; }
-      .footer { margin-top: 30px; display: flex; justify-content: space-between; font-size: 12px; }
+      @media print {
+        body { 
+          font-family: 'Arial', sans-serif; 
+          margin: 0; 
+          padding: 20px; 
+          color: #2c3e50;
+          font-size: 12px;
+          line-height: 1.4;
+          background: white;
+        }
+        .print-container { 
+          max-width: 100%; 
+          margin: 0 auto;
+        }
+        .header-section { 
+          display: flex; 
+          justify-content: space-between; 
+          align-items: flex-start;
+          margin-bottom: 25px;
+          padding-bottom: 20px;
+          border-bottom: 3px solid #3498db;
+        }
+        .company-info { 
+          flex: 1;
+        }
+        .company-header {
+            display: flex;
+            flex-direction: column; /* stack logo, name, address vertically */
+            align-items: left;    /* center align everything */
+            margin-bottom: 15px;
+            margin-left 20px;
+            text-align: left;     /* makes text centered */
+            }
+        .company-logo {
+          width: 50px;
+          height: 50px;
+          background: #3498db;
+          border-radius: 20%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: bold;
+          font-size: 20px;
+          margin-left: 60px;
+        }
+        .company-name { 
+          font-size: 22px; 
+          font-weight: bold; 
+          color: #2c3e50;
+          margin-bottom: 3px;
+          margin-left: 10px;
+        }
+        .company-details {
+          font-size: 11px;
+          color: #7f8c8d;
+          line-height: 1.4;
+          margin-left: 10px;
+        }
+        .flight-info { 
+          text-align: right;
+          flex: 1;
+        }
+        .flight-details {
+          font-size: 12px;
+          color: #2c3e50;
+          line-height: 1.8;
+        }
+        .flight-details-left {
+          margin-bottom: 12px;
+          padding: 12px;
+          background: #f8f9fa;
+          border-radius: 6px;
+        }
+        .flight-details-right {
+          margin-top: 110px;
+          padding: 12px;
+          background: #f8f9fa;
+          border-radius: 6px;
+        }
+        .detail-label {
+          font-weight: 600;
+          color: #34495e;
+          display: inline-block;
+          width: 120px;
+        }
+        .detail-value {
+          color: #2c3e50;
+        }
+        .passenger-table {
+          width: 100%; 
+          border-collapse: collapse; 
+          margin: 20px 0;
+          font-size: 11px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .passenger-table th { 
+          background: #3498db; 
+          color: white; 
+          padding: 10px 8px; 
+          text-align: left; 
+          border: 1px solid #2980b9;
+          font-weight: 600;
+          font-size: 11px;
+        }
+        .passenger-table td { 
+          padding: 8px; 
+          border: 1px solid #bdc3c7; 
+          font-size: 10px;
+        }
+        .passenger-table tr:nth-child(even) {
+          background: #f8f9fa;
+        }
+        .total-row {
+          font-weight: bold;
+          background: #e8f4fd !important;
+          font-size: 11px;
+        }
+        .summary-section {
+          margin: 25px 0;
+          padding: 15px;
+          background: linear-gradient(135deg, #3498db, #2980b9);
+          border-radius: 8px;
+          color: white;
+        }
+        .summary-title {
+          font-size: 14px;
+          font-weight: bold;
+          margin-bottom: 15px;
+          text-align: center;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+        .summary-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 15px;
+          text-align: center;
+        }
+        .summary-item {
+          padding: 10px;
+        }
+        .summary-value {
+          font-size: 20px;
+          font-weight: bold;
+          margin-bottom: 5px;
+        }
+        .summary-label {
+          font-size: 11px;
+          opacity: 0.9;
+        }
+        .footer-section { 
+          margin-top: 25px; 
+          display: flex; 
+          justify-content: space-between; 
+          font-size: 10px;
+          padding-top: 15px;
+          border-top: 1px solid #ddd;
+          color: #7f8c8d;
+        }
+        .disclaimer {
+          margin-top: 15px;
+          padding: 10px;
+          background: #fff3cd;
+          border: 1px solid #ffeaa7;
+          border-radius: 4px;
+          font-size: 10px;
+          text-align: center;
+          color: #856404;
+        }
+        .signature-area {
+          margin-top: 30px;
+          display: flex;
+          justify-content: space-between;
+        }
+        .signature-line {
+          border-top: 1px solid #333;
+          width: 200px;
+          padding-top: 5px;
+          font-size: 10px;
+          text-align: center;
+        }
+      }
     </style>
-    </head><body>`;
-
-    html += `<h2></h2>
-    <div class="header">
-      <div class="header-left">
-        <strong>${companyName}</strong><br>
-        <strong>${companyaddress}</strong><br>
-        <strong>${companyphone}</strong><br><br>
-        Airline: ${airline}<br>
-        Flight No: ${flightNo}<br>
-        Date: ${formattedDate}<br>
+    </head><body>
+    <div class="print-container">
+      <div class="header-section">
+        <div class="company-info">
+          <div class="company-header">
+            <div class="company-logo">
+                <img src="macl.png" alt="Company Logo" style="height:60px;">
+            </div>
+            <div class="company-name">${companyName}</div>
+            <div class="company-details">
+                ${companyaddress}<br>
+                ${companyphone}
+            </div>
+            </div>
+          <div class="flight-details-left">
+            <div><span class="detail-label">Airline:</span> <span class="detail-value">${airline}</span></div>
+            <div><span class="detail-label">Flight No:</span> <span class="detail-value">${flightNo}</span></div>
+            <div><span class="detail-label">Date:</span> <span class="detail-value">${formattedDate}</span></div>
+          </div>
+        </div>
+        <div class="flight-info">
+          <div class="flight-details-right">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div><span class="detail-label">STD:</span> <span class="detail-value">${std}</span></div>
+            <div><span class="detail-label">First Pax Enter:</span> <span class="detail-value">${firstPax}</span></div>
+            <div><span class="detail-label">Last Pax Left:</span> <span class="detail-value">${lastPax}</span></div>
+            <div><span class="detail-label">Shift:</span> <span class="detail-value">${shift}</span></div>
+          </div>
+        </div>
       </div>
-      <div class="header-right">
-        <br>
-        <br>
-        <br>
-        STD: ${std}<br>
-        First Pax: ${firstPax}<br>
-        Last Pax: ${lastPax}<br>
-        
-        Shift: ${shift}
-      </div>
-    </div>`;
 
-    html += `<table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Seat No</th>
-          <th>Pax</th>
-          <th>FQTV</th>
-          <th>Serial No</th>
-          <th>Remarks</th>
-        </tr>
-      </thead>
-      <tbody>`;
+      <table class="passenger-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Seat No</th>
+            <th>Pax</th>
+            <th>FQTV</th>
+            <th>Serial No</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody>`;
 
-    passengers.forEach(p => {
+    approvedPassengers.forEach(p => {
         html += `<tr>
           <td>${p.name || ""}</td>
           <td>${p.seatNo || ""}</td>
@@ -1027,31 +1347,42 @@ printBtn.addEventListener("click", () => {
     });
 
     html += `</tbody>
-      <tfoot>
-        <tr>
-          <td colspan="2"><strong>Total</strong></td>
-          <td colspan="1"><strong>${totalPax}</strong></td>
-          <td colspan="3"></td>
-        </tr>
-      </tfoot>
-    </table>
+        <tfoot>
+          <tr class="total-row">
+            <td colspan="2">TOTAL PASSENGERS</td>
+            <td>${totalPax}</td>
+            <td colspan="3"></td>
+          </tr>
+        </tfoot>
+      </table>
 
-    <div style="margin-top:10px; font-size:11px; color:#555; text-align:center;">
-      <strong>Any discrepancy should be notified within 48 hours. Any delay claims will not be accepted.</strong>
-    </div>
+      
 
-    <div class="footer">
-      <div>Prepared By: ${loggedInUserName}</div>
-      <div>Checked By: __________________</div>
+      <div class="disclaimer">
+        <strong>Any discrepancy should be notified within 48 hours. Any delay claims will not be accepted.</strong>
+      </div>
+
+      <div class="signature-area">
+        <div class="signature-line">Prepared By: ${loggedInUserName}</div>
+        <div class="signature-line">Checked By: __________________</div>
+      </div>
+
+      <div class="footer-section">
+        <div>Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</div>
+        <div>Page 1 of 1</div>
+      </div>
     </div>
     </body></html>`;
 
     printWindow.document.write(html);
     printWindow.document.close();
-    printWindow.print();
+    printWindow.focus();
+    setTimeout(() => {
+        printWindow.print();
+    }, 500);
 });
 
-// Fetch passengers on flight select
+// Fetch passengers on flight select - Only show approved transactions
 filterFlight.addEventListener("change", async () => {
     const dateVal = filterDate.value;
     const flightVal = filterFlight.value;
@@ -1085,7 +1416,8 @@ filterFlight.addEventListener("change", async () => {
                 airline: "American",
                 fqtv: "Yes",
                 serial: "001",
-                checkinTime: "12:45"
+                checkinTime: "12:45",
+                approved: true
             },
             {
                 id: "demo2",
@@ -1096,7 +1428,8 @@ filterFlight.addEventListener("change", async () => {
                 airline: "United",
                 fqtv: "No",
                 serial: "002",
-                checkinTime: "13:20"
+                checkinTime: "13:20",
+                approved: true
             }
         ];
         renderTable();
