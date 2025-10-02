@@ -100,7 +100,7 @@ body {
     flex-wrap: wrap;
 }
 
-.toolbar button {
+.toolbar a {
     padding: 10px 16px;
     font-size: 14px;
     border-radius: var(--radius);
@@ -113,14 +113,15 @@ body {
     gap: 8px;
     box-shadow: var(--shadow);
     transition: var(--transition);
+    text-decoration: none;
 }
 
-.toolbar button:hover {
+.toolbar a:hover {
     background: var(--hover);
     color: var(--dark);
 }
 
-.toolbar button.active {
+.toolbar a.active {
     background: var(--primary);
     color: white;
 }
@@ -219,6 +220,7 @@ input:focus, select:focus {
     font-size: 14px;
     border-radius: var(--radius);
     transition: var(--transition);
+    text-decoration: none;
 }
 
 .btn:hover {
@@ -456,7 +458,7 @@ tr:hover {
         flex-direction: column;
     }
     
-    .toolbar button {
+    .toolbar a {
         width: 100%;
         justify-content: center;
     }
@@ -473,17 +475,15 @@ tr:hover {
             <span id="companyName">Company Name</span>
         </div>
         <div class="user-actions">
-            <button class="btn btn-outline"><i class="fas fa-user"></i> Admin User</button>
-            <button class="btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            <button class="btn btn-outline"><i class="fas fa-user"></i> <span id="loggedInUser">Loading...</span></button>
+            <a href="logout.html" class="btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
         </div>
     </div>
 
     <!-- Toolbar -->
     <div class="toolbar">
-        <button class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
-        <button><i class="fas fa-file-alt"></i> Shift End Report</button>
-        <button><i class="fas fa-history"></i> Flight History</button>
-        <button><i class="fas fa-cog"></i> Settings</button>
+        <a href="dashboard.html" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="shiftend.html"><i class="fas fa-file-alt"></i> Shift End Report</a>
     </div>
 
     <div class="main-content">
@@ -571,8 +571,6 @@ tr:hover {
                     <button id="printBtn" class="btn"><i class="fas fa-print"></i> Print</button>
                 </div>
             </div>
-            
-            <!-- Removed stats cards as requested -->
         </div>
     </div>
 </div>
@@ -598,9 +596,10 @@ const printBtn = document.getElementById("printBtn");
 const closedWarning = document.getElementById("closedWarning");
 const companyLogo = document.getElementById("companyLogo");
 const companyName = document.getElementById("companyName");
+const loggedInUserElement = document.getElementById("loggedInUser");
 
 let passengers = [], flightDocId = null, flightStatus = "Open", flightListener = null;
-let loggedInUserName = "Admin User"; // This would typically come from your auth system
+let loggedInUserName = "Loading...";
 
 // Default date
 const today = new Date();
@@ -608,6 +607,25 @@ const yyyy = today.getFullYear();
 const mm = String(today.getMonth()+1).padStart(2,'0');
 const dd = String(today.getDate()).padStart(2,'0');
 filterDate.value = `${yyyy}-${mm}-${dd}`;
+
+// Check if user is logged in from localStorage
+function checkAuthState() {
+    const userData = localStorage.getItem('loggedInUser');
+    
+    if (userData) {
+        // User is logged in
+        const user = JSON.parse(userData);
+        loggedInUserName = user.name || user.email || "User";
+        loggedInUserElement.textContent = loggedInUserName;
+        
+        // Initialize the rest of the app
+        initializeCompanyInfo();
+        populateFlights();
+    } else {
+        // User is not logged in, redirect to login
+        window.location.href = "login.html";
+    }
+}
 
 // Initialize company info
 function initializeCompanyInfo() {
@@ -900,9 +918,8 @@ printBtn.addEventListener("click", ()=>{
         <strong>${companyaddress}</strong><br>
         <strong>${companyphone}</strong><br>
         Flight No: ${flightNo}<br>
-        Airline: ${airline}<br>
         Date: ${dateVal}<br>
-       
+        Airline: ${airline}
       </div>
       <div class="header-right">
         First Pax: ${firstPax}<br>
@@ -1015,8 +1032,7 @@ filterFlight.addEventListener("change", async () => {
 filterDate.addEventListener("change", populateFlights);
 
 // Initialize
-initializeCompanyInfo();
-populateFlights();
+checkAuthState();
 </script>
 </body>
 </html>
