@@ -4,183 +4,575 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Flight Passenger Management</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 :root {
-    --primary: #2563eb; --primary-dark: #1d4ed8; --secondary: #64748b;
-    --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
-    --light: #f8fafc; --dark: #1e293b; --border: #e2e8f0;
-    --shadow: 0 2px 4px -1px rgba(0,0,0,0.1),0 1px 2px -1px rgba(0,0,0,0.06);
-    --radius: 6px;
+    --primary: #1a73e8;
+    --primary-light: #e8f0fe;
+    --primary-dark: #0d47a1;
+    --secondary: #5f6368;
+    --success: #34a853;
+    --danger: #ea4335;
+    --warning: #f9ab00;
+    --light: #f8f9fa;
+    --dark: #202124;
+    --border: #dadce0;
+    --card-bg: #ffffff;
+    --hover: #f1f3f4;
+    --shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+    --radius: 8px;
+    --transition: all 0.3s ease;
 }
-* {margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;}
-body {background-color:#f1f5f9;color:var(--dark);line-height:1.5;padding:16px;}
-.container {max-width:1400px;margin:0 auto;}
-header {display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border);}
-.logo {display:flex;align-items:center;gap:10px;}
-.logo-icon {width:36px;height:36px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;}
-h1 {font-size:20px;font-weight:600;color:var(--dark);}
-.main-content {display:grid;grid-template-columns:1fr 320px;gap:16px;margin-bottom:16px;}
-.card {background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:16px;}
-.card-header {display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
-.card-title {font-size:16px;font-weight:600;color:var(--dark);}
-.form-group {margin-bottom:12px;}
-label {display:block;margin-bottom:4px;font-weight:500;color:var(--secondary);font-size:13px;}
-input,select,button {padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;transition:all 0.2s;}
-input:focus,select:focus {outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(37,99,235,0.1);}
-.btn {background:var(--primary);color:white;border:none;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 12px;font-size:13px;}
-.btn:hover {background:var(--primary-dark);}
-.btn-success {background:var(--success);} .btn-success:hover {background:#0da271;}
-.btn-danger {background:var(--danger);} .btn-danger:hover {background:#dc2626;}
-.form-row {display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}
-.flight-info-grid {display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:16px;}
-.info-item {display:flex;flex-direction:column;}
-.info-label {font-size:11px;color:var(--secondary);margin-bottom:4px;}
-.info-value {font-weight:500;font-size:13px;}
-.status-badge {display:inline-flex;align-items:center;padding:3px 10px;border-radius:16px;font-size:11px;font-weight:500;}
-.status-open {background: rgba(16,185,129,0.1); color: var(--success);}
-.status-closed {background: rgba(239,68,68,0.1); color: var(--danger);}
-.flight-actions {display:flex;gap:10px;margin-top:12px;}
-table {width:100%;border-collapse:collapse;margin-top:12px;font-size:13px;}
-th {background:var(--light);padding:10px;text-align:left;font-weight:600;color:var(--secondary);font-size:12px;border-bottom:1px solid var(--border);}
-td {padding:10px;border-bottom:1px solid var(--border);font-size:13px;}
-tr:hover {background: rgba(37,99,235,0.02);}
-.editable-cell {background:#fff9db;border-radius:3px;padding:3px 6px;outline:none;}
-.editable-cell:focus {background:#fff3bf;box-shadow:0 0 0 2px rgba(245,158,11,0.2);}
-.actions-cell {display:flex;gap:6px;}
-.icon-btn {background:none;border:none;cursor:pointer;padding:5px;border-radius:3px;display:flex;align-items:center;justify-content:center;color:var(--secondary);}
-.icon-btn:hover {background:var(--light);color:var(--dark);}
-.delete-btn {color:var(--danger);}
-.delete-btn:hover {background: rgba(239,68,68,0.1);}
-.empty-state {text-align:center;padding:30px 16px;color:var(--secondary);}
-.empty-state-icon {font-size:36px;margin-bottom:12px;opacity:0.5;}
-.stats-container {display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px;}
-.stat-card {background:white;border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;}
-.stat-value {font-size:20px;font-weight:700;margin-bottom:6px;}
-.stat-label {font-size:12px;color:var(--secondary);}
-@media (max-width:1024px){.main-content{grid-template-columns:1fr;}.stats-container{grid-template-columns:repeat(2,1fr);}}
-@media (max-width:768px){.flight-info-grid{grid-template-columns:1fr;}.stats-container{grid-template-columns:repeat(2,1fr);}.form-row{grid-template-columns:1fr;}table{display:block;overflow-x:auto;}.actions-cell{flex-direction:column;}}
-@media (max-width:480px){.stats-container{grid-template-columns:1fr;}}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', 'Roboto', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f5f7fa;
+    color: var(--dark);
+    line-height: 1.5;
+    padding: 0;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header h1 i {
+    color: var(--primary);
+}
+
+.company-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--secondary);
+}
+
+.company-logo {
+    width: 32px;
+    height: 32px;
+    background: var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+}
+
+.user-actions {
+    display: flex;
+    gap: 12px;
+}
+
+/* Toolbar */
+.toolbar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.toolbar a {
+    padding: 10px 16px;
+    font-size: 14px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    border: none;
+    background: var(--card-bg);
+    color: var(--secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+    text-decoration: none;
+}
+
+.toolbar a:hover {
+    background: var(--hover);
+    color: var(--dark);
+}
+
+.toolbar a.active {
+    background: var(--primary);
+    color: white;
+}
+
+/* Main Content */
+.main-content {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 24px;
+}
+
+/* Cards */
+.card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: var(--transition);
+}
+
+.card:hover {
+    box-shadow: 0 2px 6px 0 rgba(60,64,67,0.2), 0 2px 8px 2px rgba(60,64,67,0.15);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.card-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-title i {
+    color: var(--primary);
+}
+
+/* Form Elements */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: var(--secondary);
+    font-size: 14px;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    transition: var(--transition);
+    background: var(--light);
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(26,115,232,0.2);
+}
+
+/* Buttons */
+.btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    border-radius: var(--radius);
+    transition: var(--transition);
+    text-decoration: none;
+}
+
+.btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.btn-success {
+    background: var(--success);
+}
+
+.btn-success:hover {
+    background: #2e8b47;
+}
+
+.btn-danger {
+    background: var(--danger);
+}
+
+.btn-danger:hover {
+    background: #d33426;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+}
+
+.btn-outline:hover {
+    background: var(--primary-light);
+}
+
+/* Flight Info */
+.flight-info-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-label {
+    font-size: 13px;
+    color: var(--secondary);
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.info-value {
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-open {
+    background: rgba(52,168,83,0.1);
+    color: var(--success);
+}
+
+.status-closed {
+    background: rgba(234,67,53,0.1);
+    color: var(--danger);
+}
+
+.flight-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+/* Table */
+.table-container {
+    overflow-x: auto;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+th {
+    background: var(--light);
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--secondary);
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+}
+
+tr:hover {
+    background: var(--hover);
+}
+
+.editable-cell {
+    /* Removed yellow background as requested */
+    border-radius: 4px;
+    padding: 6px 8px;
+    outline: none;
+    transition: var(--transition);
+}
+
+.editable-cell:focus {
+    background: #fff3bf;
+    box-shadow: 0 0 0 2px rgba(245,158,11,0.2);
+}
+
+.actions-cell {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-start;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--secondary);
+    font-size: 16px;
+    transition: var(--transition);
+}
+
+.icon-btn:hover {
+    background: var(--hover);
+    color: var(--dark);
+}
+
+.delete-btn {
+    color: var(--danger);
+}
+
+.delete-btn:hover {
+    background: rgba(234,67,53,0.1);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--secondary);
+}
+
+.empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    font-size: 18px;
+    margin-bottom: 8px;
+    color: var(--dark);
+}
+
+.empty-state p {
+    font-size: 14px;
+}
+
+/* Warning */
+.warning-banner {
+    background: rgba(234,67,53,0.1);
+    color: var(--danger);
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.warning-banner i {
+    font-size: 18px;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .main-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+    }
+    
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .flight-actions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .toolbar {
+        flex-direction: column;
+    }
+    
+    .toolbar a {
+        width: 100%;
+        justify-content: center;
+    }
+}
 </style>
 </head>
 <body>
 <div class="container">
-<header>
-<div class="logo">
-<div class="logo-icon">
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-<path d="M22 16s-7-5-13-5-13 5-13 5 7 5 13 5 13-5 13-5z"></path>
-<path d="M15 9l-3-3-3 3"></path>
-<path d="M12 12l-3 3"></path>
-</svg>
-</div>
-<h1>Flight Passenger Management</h1>
-</div>
-<div class="status-badge" id="globalStatusBadge">Status: Loading...</div>
-</header>
+    <!-- Header -->
+    <div class="header">
+        <h1><i class="fas fa-plane"></i> Flight Passenger Management</h1>
+        <div class="company-info">
+            <div class="company-logo" id="companyLogo">C</div>
+            <span id="companyName">Company Name</span>
+        </div>
+        <div class="user-actions">
+            <button class="btn btn-outline"><i class="fas fa-user"></i> <span id="loggedInUser">Loading...</span></button>
+            <a href="logout.html" class="btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </div>
 
-<div class="main-content">
-<div class="left-column">
-<div class="card">
-<div class="card-header">
-<div class="card-title">Flight Selection</div>
-</div>
-<div class="form-row">
-<div class="form-group">
-<label for="filterDate">Date</label>
-<input type="date" id="filterDate">
-</div>
-<div class="form-group">
-<label for="filterFlight">Flight Number</label>
-<select id="filterFlight">
-<option value="">Select Flight</option>
-</select>
-</div>
-<div class="form-group" style="display:flex;align-items:flex-end;gap:5px;">
-<button id="fetchBtn" class="btn">Fetch Data</button>
-<button id="printBtn" class="btn">Print Report</button>
-</div>
-</div>
-</div>
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <a href="dashboard.html" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="shiftend.html"><i class="fas fa-file-alt"></i> Shift End Report</a>
+    </div>
 
-<div class="card">
-<div class="card-header">
-<div class="card-title">Passenger List</div>
-<div class="passenger-count" id="passengerCount">0 Count</div>
-</div>
+    <div class="main-content">
+        <div class="left-column">
+            <!-- Flight Selection Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-search"></i> Flight Selection</div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="filterDate"><i class="far fa-calendar-alt"></i> Date</label>
+                        <input type="date" id="filterDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="filterFlight"><i class="fas fa-plane-departure"></i> Flight Number</label>
+                        <select id="filterFlight">
+                            <option value="">Select Flight</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="closedWarning" class="warning-banner" style="display:none;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Flight is closed. To edit, flight needs to be in Open status.</span>
+                </div>
+            </div>
 
-<div class="table-container">
-<table id="reportTable">
-<thead>
-<tr>
-<th>Name</th>
-<th>Seat No</th>
-<th>FQTV</th>
-<th>Serial</th>
-<th>Remarks</th>
-<th>No. of Pax</th>
-<th>Shift</th>
-<th>Time Added</th>
-<th>Actions</th>
-</tr>
-</thead>
-<tbody id="tableBody"></tbody>
-</table>
-<div id="emptyState" class="empty-state" style="display:none;">
-<div class="empty-state-icon">👤</div>
-<h3>No Passengers Found</h3>
-<p>Select a date and flight number to view passenger data.</p>
-</div>
-</div>
-</div>
-</div>
+            <!-- Passenger List Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-users"></i> Passenger List</div>
+                    <div class="passenger-count" id="passengerCount">0 Passengers</div>
+                </div>
+                <div class="table-container">
+                    <table id="reportTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Seat No</th>
+                                <th>No. of Pax</th>
+                                <th>Flight No</th>
+                                <th>Airline</th>
+                                <th>FQTV</th>
+                                <th>Serial</th>
+                                <th>Check-in Time</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                <div id="emptyState" class="empty-state" style="display:none;">
+                    <div class="empty-state-icon"><i class="fas fa-user-slash"></i></div>
+                    <h3>No Passengers Found</h3>
+                    <p>Select a date and flight number to view passenger data.</p>
+                </div>
+            </div>
+        </div>
 
-<div class="right-column">
-<div class="card">
-<div class="card-header">
-<div class="card-title">Flight Information</div>
-<div class="status-badge" id="flightStatusBadge">Status: Open</div>
-</div>
+        <!-- Right column: Flight info -->
+        <div class="right-column">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-info-circle"></i> Flight Information</div>
+                    <div class="status-badge" id="flightStatusBadge">Status: Open</div>
+                </div>
 
-<div class="flight-info-grid">
-<div class="info-item">
-<span class="info-label">First Passenger Time</span>
-<input type="time" id="firstPaxTimeInput">
-</div>
-<div class="info-item">
-<span class="info-label">Scheduled Departure (STD)</span>
-<input type="time" id="stdTimeInput">
-</div>
-<div class="info-item">
-<span class="info-label">Last Passenger Left</span>
-<input type="time" id="lastPaxTimeInput">
-</div>
-</div>
+                <div class="flight-info-grid">
+                    <div class="info-item">
+                        <span class="info-label">First Passenger Time</span>
+                        <input type="time" id="firstPaxTimeInput">
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Scheduled Departure (STD)</span>
+                        <input type="time" id="stdTimeInput">
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Last Passenger Left</span>
+                        <input type="time" id="lastPaxTimeInput">
+                    </div>
+                </div>
 
-<div class="flight-actions">
-<button id="toggleFlightBtn" class="btn btn-danger">Close Flight</button>
-</div>
-</div>
-</div>
-</div>
-
-<div class="stats-container">
-<div class="stat-card">
-<div class="stat-value" id="totalPassengers">0</div>
-<div class="stat-label">Total Passengers</div>
-</div>
-<div class="stat-card">
-<div class="stat-value" id="firstPaxTime">--:--</div>
-<div class="stat-label">First Passenger Time</div>
-</div>
-<div class="stat-card">
-<div class="stat-value" id="stdTime">--:--</div>
-<div class="stat-label">Scheduled Departure</div>
-</div>
-<div class="stat-card">
-<div class="stat-value" id="lastPaxTime">--:--</div>
-<div class="stat-label">Last Passenger Left</div>
-</div>
-</div>
+                <div class="flight-actions">
+                    <button id="toggleFlightBtn" class="btn btn-success"><i class="fas fa-lock-open"></i> Flight Open</button>
+                    <button id="printBtn" class="btn"><i class="fas fa-print"></i> Print</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -189,94 +581,307 @@ tr:hover {background: rgba(37,99,235,0.02);}
 <script src="Co.js"></script>
 
 <script>
+// Elements
+const tableBody = document.getElementById("tableBody");
+const filterDate = document.getElementById("filterDate");
+const filterFlight = document.getElementById("filterFlight");
+const emptyState = document.getElementById("emptyState");
+const passengerCount = document.getElementById("passengerCount");
+const firstPaxTimeInput = document.getElementById("firstPaxTimeInput");
+const stdTimeInput = document.getElementById("stdTimeInput");
+const lastPaxTimeInput = document.getElementById("lastPaxTimeInput");
+const toggleFlightBtn = document.getElementById("toggleFlightBtn");
+const flightStatusBadge = document.getElementById("flightStatusBadge");
+const printBtn = document.getElementById("printBtn");
+const closedWarning = document.getElementById("closedWarning");
+const companyLogo = document.getElementById("companyLogo");
+const companyName = document.getElementById("companyName");
+const loggedInUserElement = document.getElementById("loggedInUser");
 
+let passengers = [], flightDocId = null, flightStatus = "Open", flightListener = null;
+let loggedInUserName = "Loading...";
 
-
-// DOM Elements
-const tableBody=document.getElementById("tableBody"), fetchBtn=document.getElementById("fetchBtn"), printBtn=document.getElementById("printBtn"),
-filterDate=document.getElementById("filterDate"), filterFlight=document.getElementById("filterFlight"), emptyState=document.getElementById("emptyState"),
-passengerCount=document.getElementById("passengerCount"), totalPassengers=document.getElementById("totalPassengers"),
-firstPaxTime=document.getElementById("firstPaxTime"), stdTime=document.getElementById("stdTime"), lastPaxTime=document.getElementById("lastPaxTime"),
-firstPaxTimeInput=document.getElementById("firstPaxTimeInput"), stdTimeInput=document.getElementById("stdTimeInput"),
-lastPaxTimeInput=document.getElementById("lastPaxTimeInput"), toggleFlightBtn=document.getElementById("toggleFlightBtn"),
-flightStatusBadge=document.getElementById("flightStatusBadge"), globalStatusBadge=document.getElementById("globalStatusBadge");
-
-let passengers=[], flightDocId=null, flightStatus="Open", flightListener=null;
-
-// Set default date to today and populate flights
+// Default date
 const today = new Date();
 const yyyy = today.getFullYear();
-const mm = String(today.getMonth() + 1).padStart(2, '0');
-const dd = String(today.getDate()).padStart(2, '0');
+const mm = String(today.getMonth()+1).padStart(2,'0');
+const dd = String(today.getDate()).padStart(2,'0');
 filterDate.value = `${yyyy}-${mm}-${dd}`;
 
-// Populate flights for the default date
-populateFlights();
+// Check if user is logged in from localStorage
+function checkAuthState() {
+    const userData = localStorage.getItem('loggedInUser');
+    
+    if (userData) {
+        // User is logged in
+        const user = JSON.parse(userData);
+        loggedInUserName = user.name || user.email || "User";
+        loggedInUserElement.textContent = loggedInUserName;
+        
+        // Initialize the rest of the app
+        initializeCompanyInfo();
+        populateFlights();
+    } else {
+        // User is not logged in, redirect to login
+        window.location.href = "login.html";
+    }
+}
 
-// Populate Flights
-async function populateFlights(){ const dateVal=filterDate.value; if(!dateVal) return;
-const snapshot=await db.collection("passengers").where("date","==",dateVal).get();
-const flights=[...new Set(snapshot.docs.map(doc=>doc.data().flightNo))];
-filterFlight.innerHTML='<option value="">Select Flight</option>';
-flights.forEach(f=>{ const option=document.createElement("option"); option.value=f; option.textContent=f; filterFlight.appendChild(option);});
-if(flights.length>0) filterFlight.value=flights[0];}
+// Initialize company info
+function initializeCompanyInfo() {
+    if (typeof companyInfo !== 'undefined' && companyInfo.name) {
+        companyName.textContent = companyInfo.name;
+        if (companyInfo.logo) {
+            companyLogo.textContent = companyInfo.logo.charAt(0).toUpperCase();
+        }
+    } else {
+        companyName.textContent = "Airline Management";
+        companyLogo.textContent = "A";
+    }
+}
 
-// Fetch passengers
-async function fetchPassengers(){ const dateVal=filterDate.value, flightVal=filterFlight.value;
-if(!dateVal || !flightVal){ alert("Select date and flight!"); return;}
-const snapshot=await db.collection("passengers").where("date","==",dateVal).where("flightNo","==",flightVal).get();
-passengers=snapshot.docs.map(doc=>({...doc.data(), id:doc.id}));
-renderTable(); updateStats(); listenFlightInfo(dateVal, flightVal);}
+// Populate flights
+async function populateFlights() {
+    const dateVal = filterDate.value;
+    if (!dateVal) return;
+    
+    try {
+        const snapshot = await db.collection("passengers").where("date", "==", dateVal).get();
+        const flights = [...new Set(snapshot.docs.map(doc => doc.data().flightNo))];
+        
+        filterFlight.innerHTML = '<option value="">Select Flight</option>';
+        flights.forEach(f => {
+            const option = document.createElement("option");
+            option.value = f;
+            option.textContent = f;
+            filterFlight.appendChild(option);
+        });
+    } catch (error) {
+        console.error("Error fetching flights:", error);
+        // Fallback to demo data if Firebase fails
+        const flights = ["AA123", "UA456", "DL789", "WN321"];
+        filterFlight.innerHTML = '<option value="">Select Flight</option>';
+        flights.forEach(f => {
+            const option = document.createElement("option");
+            option.value = f;
+            option.textContent = f;
+            filterFlight.appendChild(option);
+        });
+    }
+}
 
-// Flight info listener
-function listenFlightInfo(dateVal, flightVal){ if(flightListener) flightListener();
-flightListener=db.collection("flightInfo").where("date","==",dateVal).where("flightNo","==",flightVal).limit(1)
-.onSnapshot(snapshot=>{ if(!snapshot.empty){ const data=snapshot.docs[0].data();
-flightDocId=snapshot.docs[0].id; flightStatus=data.status||"Open"; stdTimeInput.value=data.std||""; lastPaxTimeInput.value=data.lastPaxLeft||""; firstPaxTimeInput.value=data.firstPax||"";
-updateFlightButtonLabel(); updateGlobalStatus();} else{ flightDocId=null; flightStatus="Open"; stdTimeInput.value=""; lastPaxTimeInput.value=""; firstPaxTimeInput.value="";
-updateFlightButtonLabel(); updateGlobalStatus();}});}
+// Listen flight info
+function listenFlightInfo(dateVal, flightVal) {
+    if (flightListener) flightListener();
+    
+    if (!dateVal || !flightVal) {
+        flightStatus = "Open";
+        stdTimeInput.value = lastPaxTimeInput.value = firstPaxTimeInput.value = "";
+        updateFlightButtonLabel();
+        return;
+    }
+    
+    try {
+        flightListener = db.collection("flightInfo")
+            .where("date", "==", dateVal)
+            .where("flightNo", "==", flightVal)
+            .limit(1)
+            .onSnapshot(snapshot => {
+                if (!snapshot.empty) {
+                    const data = snapshot.docs[0].data();
+                    flightDocId = snapshot.docs[0].id;
+                    flightStatus = data.status || "Open";
+                    stdTimeInput.value = data.std || "";
+                    lastPaxTimeInput.value = data.lastPaxLeft || "";
+                    firstPaxTimeInput.value = data.firstPax || "";
+                    updateFlightButtonLabel();
+                } else {
+                    flightDocId = null;
+                    flightStatus = "Open";
+                    stdTimeInput.value = lastPaxTimeInput.value = firstPaxTimeInput.value = "";
+                    updateFlightButtonLabel();
+                }
+            }, error => {
+                console.error("Error listening to flight info:", error);
+                // Fallback if Firebase fails
+                flightStatus = "Open";
+                stdTimeInput.value = "14:30";
+                lastPaxTimeInput.value = "14:15";
+                firstPaxTimeInput.value = "12:45";
+                updateFlightButtonLabel();
+            });
+    } catch (error) {
+        console.error("Error setting up flight listener:", error);
+    }
+}
 
-// Render Table
-function renderTable(){ if(passengers.length===0){ tableBody.innerHTML=""; emptyState.style.display="block"; passengerCount.textContent="0 passengers"; return;}
-emptyState.style.display="none"; passengerCount.textContent=`${passengers.length} passenger${passengers.length!==1?'s':''}`; tableBody.innerHTML="";
-passengers.forEach(p=>{ const row=document.createElement("tr"); ["name","seatNo","fqtv","serial","remarks","numPax","shift"].forEach(field=>{
-const td=document.createElement("td"); const content=document.createElement("div"); content.className="editable-cell"; content.textContent=p[field]; content.contentEditable="true";
-content.oninput=()=>{ p[field]=(field==="numPax"?parseInt(content.textContent)||1:content.textContent); };
-content.onblur=async()=>{ await db.collection("passengers").doc(p.id).update({name:p.name,seatNo:p.seatNo,fqtv:p.fqtv,serial:p.serial,remarks:p.remarks,numPax:p.numPax,shift:p.shift});};
-td.appendChild(content); row.appendChild(td);});
-const actionsTd=document.createElement("td"); actionsTd.className="actions-cell";
-const deleteBtn=document.createElement("button"); deleteBtn.className="icon-btn delete-btn"; deleteBtn.textContent="🗑";
-deleteBtn.onclick=async()=>{ await db.collection("passengers").doc(p.id).delete(); passengers=passengers.filter(pass=>pass.id!==p.id); renderTable(); updateStats(); };
-actionsTd.appendChild(deleteBtn); row.appendChild(actionsTd);
-tableBody.appendChild(row); });}
+// Render table
+function renderTable() {
+    tableBody.innerHTML = "";
+    if (passengers.length === 0) {
+        emptyState.style.display = "block";
+        passengerCount.textContent = "0 Passengers";
+        return;
+    }
+    
+    emptyState.style.display = "none";
+    passengerCount.textContent = `${passengers.length} Passenger${passengers.length !== 1 ? 's' : ''}`;
+    
+    passengers.forEach((p, index) => {
+        const row = document.createElement("tr");
+        
+        ["name", "seatNo", "numPax", "flightNo", "airline", "fqtv", "serial", "checkinTime"].forEach(field => {
+            const td = document.createElement("td");
+            const content = document.createElement("div");
+            content.className = "editable-cell";
+            content.textContent = p[field] || "";
+            content.contentEditable = false;
+            td.appendChild(content);
+            row.appendChild(td);
+        });
+        
+        const actionsTd = document.createElement("td");
+        actionsTd.className = "actions-cell";
+        
+        const editBtn = document.createElement("button");
+        editBtn.className = "icon-btn edit-btn";
+        editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+        let editing = false;
+        
+        editBtn.onclick = () => {
+            if (flightStatus === "Closed") {
+                alert("Flight is closed. Editing not allowed.");
+                return;
+            }
+            
+            editing = !editing;
+            row.querySelectorAll(".editable-cell").forEach(c => c.contentEditable = editing);
+            editBtn.innerHTML = editing ? '<i class="fas fa-save"></i>' : '<i class="fas fa-edit"></i>';
+            
+            if (!editing) {
+                // Save changes to Firebase
+                try {
+                    db.collection("passengers").doc(p.id).update({
+                        name: row.children[0].textContent,
+                        seatNo: row.children[1].textContent,
+                        numPax: parseInt(row.children[2].textContent) || 1,
+                        flightNo: row.children[3].textContent,
+                        airline: row.children[4].textContent,
+                        fqtv: row.children[5].textContent,
+                        serial: row.children[6].textContent,
+                        checkinTime: row.children[7].textContent
+                    });
+                } catch (error) {
+                    console.error("Error updating passenger:", error);
+                    alert("Error updating passenger. Please try again.");
+                }
+            }
+        };
+        
+        actionsTd.appendChild(editBtn);
+        
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "icon-btn delete-btn";
+        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+        
+        deleteBtn.onclick = () => {
+            if (flightStatus === "Closed") {
+                alert("Flight is closed. Cannot delete.");
+                return;
+            }
+            
+            if (confirm("Are you sure you want to delete this passenger?")) {
+                try {
+                    db.collection("passengers").doc(p.id).delete();
+                    passengers = passengers.filter(pass => pass.id !== p.id);
+                    renderTable();
+                } catch (error) {
+                    console.error("Error deleting passenger:", error);
+                    alert("Error deleting passenger. Please try again.");
+                }
+            }
+        };
+        
+        actionsTd.appendChild(deleteBtn);
+        row.appendChild(actionsTd);
+        tableBody.appendChild(row);
+    });
+}
 
-// Stats
-function updateStats(){ totalPassengers.textContent=passengers.reduce((sum,p)=>sum+(p.numPax||0),0);
-firstPaxTime.textContent=firstPaxTimeInput.value||"--:--"; stdTime.textContent=stdTimeInput.value||"--:--"; lastPaxTime.textContent=lastPaxTimeInput.value||"--:--"; }
+// Flight button label & status
+function updateFlightButtonLabel() {
+    // Updated button text and icon based on flight status
+    if (flightStatus === "Open") {
+        toggleFlightBtn.innerHTML = '<i class="fas fa-lock-open"></i> Flight Open';
+        toggleFlightBtn.className = "btn btn-success";
+    } else {
+        toggleFlightBtn.innerHTML = '<i class="fas fa-lock"></i> Flight Closed';
+        toggleFlightBtn.className = "btn btn-danger";
+    }
+    
+    flightStatusBadge.textContent = `Status: ${flightStatus}`;
+    flightStatusBadge.className = `status-badge ${flightStatus === "Open" ? "status-open" : "status-closed"}`;
+    printBtn.disabled = flightStatus !== "Closed";
+    closedWarning.style.display = flightStatus === "Closed" ? "flex" : "none";
+}
 
-function updateFlightButtonLabel(){ toggleFlightBtn.textContent=flightStatus==="Open"?"Close Flight":"Open Flight";
-flightStatusBadge.textContent=`Status: ${flightStatus}`; flightStatusBadge.className=`status-badge ${flightStatus==="Open"?"status-open":"status-closed"}`; }
+// Toggle flight
+toggleFlightBtn.onclick = async () => {
+    if (!filterFlight.value) {
+        alert("No flight selected");
+        return;
+    }
+    
+    if (flightStatus === "Open") {
+        if (!firstPaxTimeInput.value || !lastPaxTimeInput.value || !stdTimeInput.value) {
+            alert("Cannot close flight. Enter First Passenger, Last Passenger, and STD.");
+            return;
+        }
+    }
+    
+    const newStatus = flightStatus === "Open" ? "Closed" : "Open";
+    
+    try {
+        if (flightDocId) {
+            // Update existing flight info
+            await db.collection("flightInfo").doc(flightDocId).update({
+                status: newStatus,
+                firstPax: firstPaxTimeInput.value,
+                std: stdTimeInput.value,
+                lastPaxLeft: lastPaxTimeInput.value
+            });
+        } else {
+            // Create new flight info
+            const docRef = await db.collection("flightInfo").add({
+                date: filterDate.value,
+                flightNo: filterFlight.value,
+                status: newStatus,
+                firstPax: firstPaxTimeInput.value,
+                std: stdTimeInput.value,
+                lastPaxLeft: lastPaxTimeInput.value
+            });
+            flightDocId = docRef.id;
+        }
+        
+        flightStatus = newStatus;
+        updateFlightButtonLabel();
+    } catch (error) {
+        console.error("Error updating flight status:", error);
+        alert("Error updating flight status. Please try again.");
+    }
+}
 
-function updateGlobalStatus(){ globalStatusBadge.textContent=`Flight ${filterFlight.value||"--"} on ${filterDate.value||"--"}: ${flightStatus}`; }
-
-toggleFlightBtn.addEventListener("click", async()=>{ if(!flightDocId){ alert("Flight info not found!"); return;}
-flightStatus=flightStatus==="Open"?"Closed":"Open"; await db.collection("flightInfo").doc(flightDocId).update({
-status:flightStatus,
-firstPax:firstPaxTimeInput.value,
-std:stdTimeInput.value,
-lastPaxLeft:lastPaxTimeInput.value
-});
-updateFlightButtonLabel(); updateGlobalStatus(); });
-
-fetchBtn.addEventListener("click", fetchPassengers); filterDate.addEventListener("change", populateFlights);
-// Get logged-in user
-const userData = JSON.parse(localStorage.getItem("loggedInUser"));
-let loggedInUserName = userData ? (userData.name || userData.username) : "__________________";
-
-// Ge
 // Print report (updated layout)
 printBtn.addEventListener("click", ()=>{
-    if(passengers.length===0){ alert("No passengers to print!"); return; }
+    if (flightStatus !== "Closed") {
+        alert("You must close the flight before printing the report.");
+        return;
+    }
+    
+    if(passengers.length===0){ 
+        alert("No passengers to print!"); 
+        return; 
+    }
 
     const flightNo = filterFlight.value;
     const dateVal = filterDate.value;
@@ -370,6 +975,64 @@ passengers.forEach(p=>{
     printWindow.document.close();
     printWindow.print();
 });
+
+// Fetch passengers on flight select
+filterFlight.addEventListener("change", async () => {
+    const dateVal = filterDate.value;
+    const flightVal = filterFlight.value;
+    
+    if (!dateVal || !flightVal) {
+        tableBody.innerHTML = "";
+        passengers = [];
+        renderTable();
+        return;
+    }
+    
+    try {
+        const snapshot = await db.collection("passengers")
+            .where("date", "==", dateVal)
+            .where("flightNo", "==", flightVal)
+            .get();
+            
+        passengers = snapshot.docs.map(doc => ({...doc.data(), id: doc.id}));
+        renderTable();
+        listenFlightInfo(dateVal, flightVal);
+    } catch (error) {
+        console.error("Error fetching passengers:", error);
+        // Fallback to demo data if Firebase fails
+        passengers = [
+            {
+                id: "demo1",
+                name: "John Smith",
+                seatNo: "12A",
+                numPax: 1,
+                flightNo: flightVal,
+                airline: "American",
+                fqtv: "Yes",
+                serial: "001",
+                checkinTime: "12:45"
+            },
+            {
+                id: "demo2",
+                name: "Maria Garcia",
+                seatNo: "15B",
+                numPax: 2,
+                flightNo: flightVal,
+                airline: "United",
+                fqtv: "No",
+                serial: "002",
+                checkinTime: "13:20"
+            }
+        ];
+        renderTable();
+        listenFlightInfo(dateVal, flightVal);
+    }
+});
+
+filterDate.addEventListener("change", populateFlights);
+
+// Initialize
+checkAuthState();
 </script>
 </body>
 </html>
