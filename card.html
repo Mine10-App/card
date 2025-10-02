@@ -176,6 +176,9 @@
             .date-filter {flex-wrap: wrap;}
             .top-right-nav {align-items: flex-start;}
         }
+        #searchInput {
+    display: none;
+}
     </style>
 </head>
 <body>
@@ -283,7 +286,7 @@
                     
                     <div class="form-row compact-form-row">
                         <div class="form-group">
-                            <label for="numPax">No. of Pax</label>
+                            <label for="numPax">Pax</label>
                             <input type="number" id="numPax" class="compact-input" value="1" min="1" required>
                         </div>
                     </div>
@@ -338,14 +341,14 @@
         <div class="card passenger-list-card">
             <div class="card-header">
                 <div class="card-title">Passenger List</div>
-                <div class="passenger-count">Total: <span id="paxCount">0</span> passengers</div>
+                <div class="passenger-count">Total: <span id="paxCount">0</span> Cards</div>
             </div>
 
             <!-- Table Actions -->
             <div class="action-bar">
                 <div class="table-actions">
                     <div class="form-group search-box">
-                        <input type="text" id="searchInput" class="compact-input" placeholder="Search passengers...">
+                        <input type="text" id="searchInput" class="compact-input" style="width: auto;" placeholder="Search passengers...">
                     </div>
                     <div class="filter-group">
                         <div class="date-filter-container">
@@ -388,14 +391,14 @@
                         <tr>
                             <th>Date</th>
                             <th>Airline</th>
-                            <th>Flight No</th>
+                            <th>Flight</th>
                             <th>Name</th>
                             <th>Seat</th>
                             <th>FQTV</th>
                             <th>Serial</th>
                             <th>Remarks</th>
-                            <th>No. of Pax</th>
-                            <th>Time Added</th>
+                            <th>Pax</th>
+                            <th>Check-In</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -444,8 +447,6 @@
 <script src="fire.js"></script>
 <script src="Co.js"></script>
 <script>
-
-
 // Elements
 const form = document.getElementById("passengerForm");
 const tableBody = document.getElementById("tableBody");
@@ -484,18 +485,20 @@ let isShiftOpen = false;
 // Track if current entry is from QR scan
 let isQREntry = false;
 
+// Track current active tab
+let currentTab = "all";
+
 // Set current date
 const today = new Date().toISOString().split("T")[0];
 form.date.value = today;
 dateFrom.value = today;
 dateTo.value = today;
 
-// ----------- Fixed: Fetch current shift from Firestore -----------
+// ----------- Fetch current shift from Firestore -----------
 async function fetchCurrentShift() {
   try {
     console.log("Starting shift fetch...");
     
-    // First, let's check if Firebase is properly initialized
     if (!db) {
       console.error("Firebase Firestore is not initialized");
       throw new Error("Firestore not available");
@@ -504,13 +507,11 @@ async function fetchCurrentShift() {
     const today = new Date().toISOString().split('T')[0];
     console.log("Looking for shifts for date:", today);
 
-    // Declare variables with default values
     let shiftLabel = "No Shift Data";
     let shiftType = "";
     let enableEntry = false;
     let shiftTimeText = "No shift data available";
 
-    // Try to get shifts collection
     const snapshot = await db.collection("shifts")
       .where("date", "==", today)
       .limit(1)
@@ -525,7 +526,6 @@ async function fetchCurrentShift() {
       console.log("✅ Shift document found:", data);
       console.log("Document ID:", shiftDoc.id);
 
-      // Check shift1
       if (data.shift1 && data.shift1.status === "Open") {
         console.log("✅ Shift1 is Open");
         shiftLabel = "Morning Shift - OPEN";
@@ -534,7 +534,6 @@ async function fetchCurrentShift() {
         shiftStatus.className = "shift-status open";
         shiftTimeText = `Opened at: ${data.shift1.openedAt || "N/A"}`;
       } 
-      // Check shift2
       else if (data.shift2 && data.shift2.status === "Open") {
         console.log("✅ Shift2 is Open");
         shiftLabel = "Evening Shift - OPEN";
@@ -543,7 +542,6 @@ async function fetchCurrentShift() {
         shiftStatus.className = "shift-status open";
         shiftTimeText = `Opened at: ${data.shift2.openedAt || "N/A"}`;
       } 
-      // No open shifts
       else {
         console.log("❌ No open shifts found");
         shiftLabel = "No Shift Open";
@@ -558,12 +556,8 @@ async function fetchCurrentShift() {
       shiftLabel = "No Shift Data for Today";
       shiftStatus.className = "shift-status closed";
       shiftTimeText = `No shift data found for ${today}`;
-      
-      // Let's see what documents exist in the shifts collection
-      await debugAllShifts();
     }
 
-    // Update the DOM elements
     shiftName.textContent = shiftLabel;
     shiftTime.textContent = shiftTimeText;
     currentShiftField.value = shiftType;
@@ -571,7 +565,6 @@ async function fetchCurrentShift() {
     currentShift = shiftType;
     isShiftOpen = enableEntry;
 
-    // Update global status badge if it exists
     if (globalStatusBadge) {
       globalStatusBadge.textContent = enableEntry ? "Shift Open" : "Shift Closed";
       globalStatusBadge.className = `status-badge ${enableEntry ? "status-open" : "status-closed"}`;
@@ -583,13 +576,12 @@ async function fetchCurrentShift() {
     console.error("❌ Error fetching shift:", err);
     console.error("Error details:", err.message);
     
-    // More detailed error information
     shiftName.textContent = "Error Loading Shift";
     shiftTime.textContent = `Error: ${err.message}`;
     shiftStatus.className = "shift-status closed";
     
     currentShiftField.value = "Error";
-    addPassengerBtn.disabled = false; // Allow operations anyway
+    addPassengerBtn.disabled = false;
     currentShift = "Morning";
     isShiftOpen = true;
     
@@ -609,13 +601,75 @@ async function fetchPassengers(){
         const snapshot = await db.collection("passengers")
             .orderBy("timeAdded","desc").get();
         passengerList = snapshot.docs.map(doc=>({...doc.data(), id:doc.id}));
-        filteredPassengerList = passengerList.filter(p => p.approved !== true);
-        renderPassengers();
+        
+        // Apply current tab filter
+        applyTabFilter();
+        
         updateStats();
         populateAirlineFilter();
     } catch (error) {
         console.error("Error fetching passengers:", error);
     }
+}
+
+// Apply tab-based filtering
+function applyTabFilter() {
+    if (currentTab === "all") {
+        // Show only passengers without approval:true
+        filteredPassengerList = passengerList.filter(p => p.approved !== true);
+    } else if (currentTab === "pending") {
+        // Same as all - show unapproved
+        filteredPassengerList = passengerList.filter(p => p.approved !== true);
+    } else if (currentTab === "approved") {
+        // Show only approved passengers
+        filteredPassengerList = passengerList.filter(p => p.approved === true);
+    }
+    
+    // Apply additional filters (search, date, etc.)
+    applyAdditionalFilters();
+}
+
+// Apply search, date, shift, and airline filters
+function applyAdditionalFilters() {
+    let result = [...filteredPassengerList]; // Start with tab-filtered list
+    
+    // Search filter
+    const searchTerm = searchInput.value.toLowerCase();
+    if(searchTerm){
+        result = result.filter(p => 
+            p.name.toLowerCase().includes(searchTerm) ||
+            p.flightNo.toLowerCase().includes(searchTerm) ||
+            p.airline.toLowerCase().includes(searchTerm) ||
+            (p.seatNo && p.seatNo.toLowerCase().includes(searchTerm))
+        );
+    }
+    
+    // Date filter
+    const dateFromValue = dateFrom.value;
+    const dateToValue = dateTo.value;
+    if(dateFromValue && dateToValue){
+        result = result.filter(p => {
+            const pDate = new Date(p.date);
+            const fromDate = new Date(dateFromValue);
+            const toDate = new Date(dateToValue);
+            return pDate >= fromDate && pDate <= toDate;
+        });
+    }
+    
+    // Shift filter
+    const shiftFilterValue = shiftFilter.value;
+    if(shiftFilterValue !== "all"){
+        result = result.filter(p => p.shift === shiftFilterValue);
+    }
+    
+    // Airline filter
+    const airlineFilterValue = airlineFilter.value;
+    if(airlineFilterValue !== "all"){
+        result = result.filter(p => p.airline === airlineFilterValue);
+    }
+    
+    filteredPassengerList = result;
+    renderPassengers();
 }
 
 function renderPassengers(){
@@ -650,12 +704,12 @@ function renderPassengers(){
         dateTd.appendChild(dateContent);
         row.appendChild(dateTd);
         
-        // Other fields (skip shift column)
+        // Other fields
         ["airline","flightNo","name","seatNo","fqtv","serial","remarks","numPax"].forEach(field=>{
             const td = document.createElement("td");
             const content = document.createElement("div");
             content.className="editable-cell";
-            content.textContent = p[field];
+            content.textContent = p[field] || "";
             content.contentEditable = true;
             content.oninput = ()=>{p[field]=(field==="numPax"?parseInt(content.textContent)||1:content.textContent); updateTotal();}
             content.onblur= async ()=>{
@@ -684,23 +738,26 @@ function renderPassengers(){
         
         const tdAction=document.createElement("td");
         tdAction.className="actions-cell";
-        const saveBtn=document.createElement("button");
-        saveBtn.className="icon-btn save-btn";
-        saveBtn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>`;
-        saveBtn.title="Save/Approve passenger";
-        saveBtn.onclick=async ()=>{
-            try {
-                const flightStatus = await getFlightStatus(p.flightNo, p.date);
-                if(flightStatus==="Closed"){alert("Flight is closed."); return;}
-                await db.collection("passengers").doc(p.id).update({approved:true});
-                passengerList=passengerList.filter(item=>item.id!==p.id);
-                filteredPassengerList = filteredPassengerList.filter(item=>item.id!==p.id);
-                renderPassengers();
-                updateStats();
-            } catch (error) {
-                console.error("Error approving passenger:", error);
-            }
-        };
+        
+        // Only show save button for unapproved passengers
+        if (p.approved !== true) {
+            const saveBtn=document.createElement("button");
+            saveBtn.className="icon-btn save-btn";
+            saveBtn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>`;
+            saveBtn.title="Save/Approve passenger";
+            saveBtn.onclick=async ()=>{
+                try {
+                    const flightStatus = await getFlightStatus(p.flightNo, p.date);
+                    if(flightStatus==="Closed"){alert("Flight is closed."); return;}
+                    await db.collection("passengers").doc(p.id).update({approved:true});
+                    // The real-time listener will handle the update
+                } catch (error) {
+                    console.error("Error approving passenger:", error);
+                }
+            };
+            tdAction.appendChild(saveBtn);
+        }
+        
         const deleteBtn=document.createElement("button");
         deleteBtn.className="icon-btn delete-btn";
         deleteBtn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
@@ -709,16 +766,12 @@ function renderPassengers(){
             if(confirm("Are you sure?")){
                 try {
                     await db.collection("passengers").doc(p.id).delete(); 
-                    passengerList=passengerList.filter(item=>item.id!==p.id); 
-                    filteredPassengerList=filteredPassengerList.filter(item=>item.id!==p.id); 
-                    renderPassengers(); 
-                    updateStats();
                 } catch (error) {
                     console.error("Error deleting passenger:", error);
                 }
             }
         };
-        tdAction.appendChild(saveBtn); tdAction.appendChild(deleteBtn);
+        tdAction.appendChild(deleteBtn);
         row.appendChild(tdAction);
         tableBody.appendChild(row);
     });
@@ -806,10 +859,9 @@ async function getFlightStatus(flightNo, date){
 // ---------- Add passenger automatically (for QR entries) ----------
 async function addPassengerAutomatically(){
     if(!nameField.value || !seatField.value || !flightField.value) {
-        return; // Don't proceed if required fields are empty
+        return;
     }
 
-    // Check if shift is open
     if (!isShiftOpen) {
         alert("Cannot add passenger. No shift is currently open.");
         return;
@@ -848,7 +900,6 @@ async function addPassengerAutomatically(){
     };
 
     await db.collection("passengers").add(passenger);
-    fetchPassengers();
 
     // Reset form but keep date and shift
     nameField.value = "";
@@ -862,7 +913,6 @@ async function addPassengerAutomatically(){
     
     qrInput.focus();
     
-    // Show success feedback
     showQRScanFeedback("Passenger added automatically from QR scan");
 }
 
@@ -873,7 +923,6 @@ async function addPassengerManually(){
         return;
     }
 
-    // Check if shift is open
     if (!isShiftOpen) {
         alert("Cannot add passenger. No shift is currently open.");
         return;
@@ -912,7 +961,6 @@ async function addPassengerManually(){
     };
 
     await db.collection("passengers").add(passenger);
-    fetchPassengers();
 
     // Reset form but keep date and shift
     nameField.value = "";
@@ -926,7 +974,6 @@ async function addPassengerManually(){
     
     qrInput.focus();
     
-    // Show success feedback
     showQRScanFeedback("Passenger added manually");
 }
 
@@ -936,7 +983,6 @@ function getAirline(flightNo){
     
     const airlineCode = flightNo.substring(0,2).toUpperCase();
     
-    // IATA Airline Codes mapping
     const iataAirlines = {
         "BA": "British Airways",
         "TK": "Turkish Airlines",
@@ -1008,10 +1054,8 @@ function showQRScanFeedback(message) {
 qrInput.addEventListener("change", () => {
     if(!qrInput.value.trim()) return;
     
-    // Set flag to indicate this is a QR entry
     isQREntry = true;
     
-    // Use the working parser for manual input
     const parsed = parseQR(qrInput.value);
     
     console.log("Manual QR parsed:", parsed);
@@ -1023,7 +1067,6 @@ qrInput.addEventListener("change", () => {
     }
     if(parsed.seatNo) seatField.value = parsed.seatNo;
     
-    // Auto-save manual QR entries immediately
     setTimeout(() => {
         addPassengerAutomatically();
     }, 500);
@@ -1041,7 +1084,6 @@ flightField.addEventListener("input", ()=>{
 // Form submit - for manual entries only
 form.addEventListener("submit", async e=>{
     e.preventDefault();
-    // Reset QR flag for manual entries
     isQREntry = false;
     await addPassengerManually();
 });
@@ -1051,56 +1093,14 @@ clearBtn.addEventListener("click", () => {
     form.reset();
     form.date.value = today;
     airlineField.value = "";
-    // Reset QR flag when clearing form
     isQREntry = false;
 });
 
 // Filter functionality
-searchInput.addEventListener("input", applyFilters);
-applyDateFilter.addEventListener("click", applyFilters);
-shiftFilter.addEventListener("change", applyFilters);
-airlineFilter.addEventListener("change", applyFilters);
-
-function applyFilters(){
-    let result = passengerList.filter(p => p.approved !== true);
-    
-    // Search filter
-    const searchTerm = searchInput.value.toLowerCase();
-    if(searchTerm){
-        result = result.filter(p => 
-            p.name.toLowerCase().includes(searchTerm) ||
-            p.flightNo.toLowerCase().includes(searchTerm) ||
-            p.airline.toLowerCase().includes(searchTerm)
-        );
-    }
-    
-    // Date filter
-    const dateFromValue = dateFrom.value;
-    const dateToValue = dateTo.value;
-    if(dateFromValue && dateToValue){
-        result = result.filter(p => {
-            const pDate = new Date(p.date);
-            const fromDate = new Date(dateFromValue);
-            const toDate = new Date(dateToValue);
-            return pDate >= fromDate && pDate <= toDate;
-        });
-    }
-    
-    // Shift filter
-    const shiftFilterValue = shiftFilter.value;
-    if(shiftFilterValue !== "all"){
-        result = result.filter(p => p.shift === shiftFilterValue);
-    }
-    
-    // Airline filter
-    const airlineFilterValue = airlineFilter.value;
-    if(airlineFilterValue !== "all"){
-        result = result.filter(p => p.airline === airlineFilterValue);
-    }
-    
-    filteredPassengerList = result;
-    renderPassengers();
-}
+searchInput.addEventListener("input", applyAdditionalFilters);
+applyDateFilter.addEventListener("click", applyAdditionalFilters);
+shiftFilter.addEventListener("change", applyAdditionalFilters);
+airlineFilter.addEventListener("change", applyAdditionalFilters);
 
 // Tab functionality
 tabs.forEach(tab => {
@@ -1108,22 +1108,13 @@ tabs.forEach(tab => {
         tabs.forEach(t => t.classList.remove("active"));
         tab.classList.add("active");
         
-        const tabValue = tab.getAttribute("data-tab");
-        if(tabValue === "all"){
-            filteredPassengerList = passengerList.filter(p => p.approved !== true);
-        } else if(tabValue === "pending"){
-            filteredPassengerList = passengerList.filter(p => p.approved !== true);
-        } else if(tabValue === "approved"){
-            filteredPassengerList = passengerList.filter(p => p.approved === true);
-        }
-        
-        renderPassengers();
+        currentTab = tab.getAttribute("data-tab");
+        applyTabFilter();
     });
 });
 
 // Export functionality
 exportBtn.addEventListener("click", () => {
-    // Simple CSV export implementation
     const headers = ["Date", "Shift", "Airline", "Flight No", "Name", "Seat", "FQTV", "Serial", "Remarks", "No. of Pax", "Time Added"];
     const csvContent = [
         headers.join(","),
@@ -1165,11 +1156,12 @@ db.collection("passengers")
     .orderBy("timeAdded", "desc")
     .onSnapshot((snapshot) => {
         passengerList = snapshot.docs.map(doc => ({...doc.data(), id:doc.id}));
-        filteredPassengerList = passengerList.filter(p => p.approved !== true);
-        renderPassengers();
+        
+        // Apply current tab filter to the updated data
+        applyTabFilter();
+        
         updateStats();
         populateAirlineFilter();
-    });
-</script>
+    });</script>
 </body>
 </html>
