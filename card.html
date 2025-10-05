@@ -10,144 +10,148 @@
     <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
     <style>
         :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --primary-light: #dbeafe;
-            --secondary: #64748b;
-            --success: #10b981;
-            --success-light: #d1fae5;
-            --danger: #ef4444;
-            --danger-light: #fee2e2;
-            --warning: #f59e0b;
-            --warning-light: #fef3c7;
-            --light: #f8fafc;
-            --dark: #1e293b;
-            --border: #e2e8f0;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --radius: 8px;
+            --gold: #D4AF37;
+            --gold-light: #F5E8B5;
+            --blue: #1E3A8A;
+            --blue-light: #3B82F6;
+            --white: #FFFFFF;
+            --light-gray: #F8FAFC;
+            --text: #334155;
+            --border: #E2E8F0;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
         }
 
         * {margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
-        body {background-color:#f1f5f9; color:var(--dark); line-height:1.6; padding:20px;}
+        body {background-color:#f1f5f9; color:var(--text); line-height:1.6; padding:20px;}
         .container {max-width:1400px; margin:0 auto;}
-        header {display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--border);}
+        
+        /* Header Styles */
+        header {display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; padding-bottom:16px; border-bottom:2px solid var(--gold);}
         .logo {display:flex; align-items:center; gap:12px;}
-        .logo-icon {width:40px; height:40px; background:var(--primary); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white;}
-        h1 {font-size:24px; font-weight:600; color:var(--dark);}
+        .logo-icon {width:40px; height:40px; background:var(--blue); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white;}
+        h1 {font-size:24px; font-weight:600; color:var(--blue);}
         
         /* Top Right Navigation */
         .top-right-nav {display:flex; align-items:center; gap:16px;}
         .nav-buttons {display:flex; gap:12px;}
-        .nav-btn {background:var(--primary); color:white; border:none; cursor:pointer; font-weight:500; display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:10px 16px; font-size:12px; border-radius:var(--radius); text-decoration:none; transition:all 0.2s;}
-        .nav-btn:hover {background:var(--primary-dark); transform:translateY(-1px);}
-        .nav-btn.outline {background:transparent; border:1px solid var(--primary); color:var(--primary);}
+        .nav-btn {background:var(--blue); color:white; border:none; cursor:pointer; font-weight:500; display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:10px 16px; font-size:12px; border-radius:6px; text-decoration:none; transition:all 0.2s;}
+        .nav-btn:hover {background:var(--blue-light);}
+        .nav-btn.outline {background:transparent; border:1px solid var(--blue); color:var(--blue);}
         .nav-btn.outline:hover {background:rgba(37,99,235,0.05);}
         
         /* Shift Status */
-        .shift-status {display:flex; align-items:center; gap:8px; padding:10px 16px; border-radius:var(--radius); background:var(--light); border:1px solid var(--border);}
-        .shift-status.open {background:var(--success-light); border:1px solid var(--success);}
-        .shift-status.closed {background:var(--danger-light); border:1px solid var(--danger);}
+        .shift-status {display:flex; align-items:center; gap:8px; padding:10px 16px; border-radius:6px; background:var(--white); border:1px solid var(--border);}
+        .shift-status.open {background:rgba(16,185,129,0.1); border:1px solid var(--success);}
+        .shift-status.closed {background:rgba(239,68,68,0.1); border:1px solid var(--danger);}
         
-        .card {background:white; border-radius:var(--radius); box-shadow:var(--shadow); padding:20px; margin-bottom:24px;}
+        /* Card Styles */
+        .card {background:white; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.05); padding:20px; margin-bottom:24px; border-top:3px solid var(--gold);}
         .card-header {display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;}
-        .card-title {font-size:16px; font-weight:600; color:var(--dark);}
+        .card-title {font-size:16px; font-weight:600; color:var(--blue);}
+        
+        /* Form Styles */
         .form-group {margin-bottom:12px;}
-        label {display:block; margin-bottom:4px; font-weight:500; color:var(--secondary); font-size:12px;}
-        input, select, button {padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius); font-size:12px; transition: all 0.2s; width:100%;}
-        input:focus, select:focus {outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(37, 99, 235, 0.1);}
-        .btn {background:var(--primary); color:white; border:none; cursor:pointer; font-weight:500; display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:8px 12px; font-size:12px;}
-        .btn:hover {background:var(--primary-dark);}
+        label {display:block; margin-bottom:4px; font-weight:500; color:var(--text); font-size:12px;}
+        input, select, button {padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:12px; transition: all 0.2s; width:100%;}
+        input:focus, select:focus {outline:none; border-color:var(--blue); box-shadow:0 0 0 2px rgba(37, 99, 235, 0.1);}
+        
+        /* Button Styles */
+        .btn {background:var(--blue); color:white; border:none; cursor:pointer; font-weight:500; display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:8px 12px; font-size:12px; border-radius:6px;}
+        .btn:hover {background:var(--blue-light);}
         .btn-success {background:var(--success);}
         .btn-success:hover {background:#0da271;}
         .btn-danger {background:var(--danger);}
         .btn-danger:hover {background:#dc2626;}
-        .btn-outline {background:transparent; border:1px solid var(--primary); color:var(--primary);}
+        .btn-outline {background:transparent; border:1px solid var(--blue); color:var(--blue);}
         .btn-outline:hover {background:rgba(37,99,235,0.05);}
+        
+        /* Layout */
         .form-row {display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:12px;}
-        .qr-section {background:#f0f9ff; border-radius:var(--radius); padding:12px; margin-bottom:16px; border:1px dashed var(--primary);}
-        .qr-label {display:flex; align-items:center; gap:6px; margin-bottom:6px; color:var(--primary); font-weight:500; font-size:12px;}
+        .main-content {display: grid; grid-template-columns: 400px 1fr; gap: 20px;}
+        .passenger-form-card {height: fit-content; position: sticky; top: 20px;}
+        .passenger-list-card {grid-column: 2 / 3;}
+        .passenger-form-card {grid-column: 1 / 2;}
+        .stats-grid {grid-column: 1 / 3; display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:12px; margin-bottom:20px;}
+        
+        /* QR Section */
+        .qr-section {background:#f0f9ff; border-radius:6px; padding:12px; margin-bottom:16px; border:1px dashed var(--blue);}
+        .qr-label {display:flex; align-items:center; gap:6px; margin-bottom:6px; color:var(--blue); font-weight:500; font-size:12px;}
+        
+        /* Table Styles */
         table {width:100%; border-collapse:collapse; margin-top:12px;}
-        th {background:var(--light); padding:10px; text-align:left; font-weight:600; color:var(--secondary); font-size:12px; border-bottom:1px solid var(--border);}
-        td {padding:10px; border-bottom:1px solid var(--border); font-size:12px; background:transparent !important;}
+        th {background:var(--light-gray); padding:10px; text-align:left; font-weight:600; color:var(--text); font-size:12px; border-bottom:1px solid var(--border);}
+        td {padding:10px; border-bottom:1px solid var(--border); font-size:12px;}
         tr:hover {background: rgba(37, 99, 235, 0.02);}
         
-        /* Remove yellow background from editable cells */
+        /* Editable Cells */
         .editable-cell {
             border-radius:4px; 
             padding:4px 6px; 
             outline:none; 
             min-height:18px; 
             font-size:12px;
-            background: transparent !important;
+            background: transparent;
             border: 1px solid transparent;
         }
         .editable-cell:focus {
-            background:var(--primary-light) !important;
-            border:1px solid var(--primary);
-            box-shadow:0 0 0 2px rgba(37, 99, 235, 0.2);
+            background:rgba(37, 99, 235, 0.05);
+            border:1px solid var(--blue);
         }
         
-        /* Larger action buttons */
+        /* Action Buttons */
         .actions-cell {display:flex; gap:8px;}
-        .icon-btn {background:none; border:none; cursor:pointer; padding:6px; border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--secondary); width:36px; height:36px;}
-        .icon-btn:hover {background:var(--light); color:var(--dark);}
+        .icon-btn {background:none; border:none; cursor:pointer; padding:6px; border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--text); width:36px; height:36px;}
+        .icon-btn:hover {background:var(--light-gray);}
         .save-btn {color:var(--success);}
         .save-btn:hover {background:rgba(16,185,129,0.1);}
         .delete-btn {color:var(--danger);}
         .delete-btn:hover {background:rgba(239,68,68,0.1);}
-        .empty-state {text-align:center; padding:30px 15px; color:var(--secondary);}
-        .empty-state-icon {font-size:36px; margin-bottom:12px; opacity:0.5;}
+        
+        /* Status Badges */
         .status-badge {display:inline-flex; align-items:center; padding:3px 8px; border-radius:20px; font-size:10px; font-weight:500;}
         .status-open {background:rgba(16,185,129,0.1); color:var(--success);}
         .status-closed {background:rgba(239,68,68,0.1); color:var(--danger);}
         
-        /* New styles for redesign */
-        .section-title {font-size:14px; font-weight:600; color:var(--dark); margin-bottom:12px; padding-bottom:6px; border-bottom:1px solid var(--border);}
-        .form-section {margin-bottom:16px;}
-        .form-section:last-child {margin-bottom:0;}
-        .form-row-compact {grid-template-columns:repeat(auto-fit, minmax(120px,1fr));}
-        .card-footer {display:flex; justify-content:flex-end; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);}
-        .table-actions {display:flex; gap:6px; margin-bottom:12px;}
+        /* Stats Cards */
+        .stat-card {background:white; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.05); padding:12px; display:flex; flex-direction:column; border-top:2px solid var(--gold);}
+        .stat-value {font-size:20px; font-weight:700; color:var(--blue); margin-bottom:4px;}
+        .stat-label {font-size:12px; color:var(--text);}
+        
+        /* Filter and Search */
+        .action-bar {display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
+        .table-actions {display:flex; gap:6px; align-items:center;}
         .search-box {max-width:250px;}
         .filter-group {display:flex; gap:8px; align-items:center;}
         .filter-select {width:auto; min-width:100px; font-size:12px; padding:6px 8px;}
-        .stats-grid {display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:12px; margin-bottom:20px;}
-        .stat-card {background:white; border-radius:var(--radius); box-shadow:var(--shadow); padding:12px; display:flex; flex-direction:column;}
-        .stat-value {font-size:20px; font-weight:700; color:var(--primary); margin-bottom:4px;}
-        .stat-label {font-size:12px; color:var(--secondary);}
-        .action-bar {display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
-        .tabs {display:flex; border-bottom:1px solid var(--border); margin-bottom:12px;}
-        .tab {padding:6px 12px; cursor:pointer; border-bottom:2px solid transparent; font-weight:500; font-size:12px;}
-        .tab.active {border-bottom-color:var(--primary); color:var(--primary);}
+        
+        /* Empty State */
+        .empty-state {text-align:center; padding:30px 15px; color:var(--text);}
+        .empty-state-icon {font-size:36px; margin-bottom:12px; opacity:0.5;}
+        
+        /* Compact Styles */
         .compact-input {padding: 6px 8px; font-size: 12px;}
         .compact-form-row {grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px;}
         
-        /* Date filter styles */
-        .date-filter-container {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        .date-filter {
-            display: flex;
-            gap: 8px;
-        }
-        .date-filter input {
-            width: auto;
-        }
+        /* Date Filter */
+        .date-filter-container {display: flex; gap: 8px; align-items: center;}
+        .single-date-filter {display: flex; gap: 8px; align-items: center;}
+        .single-date-filter input {width: auto;}
         
-        /* New layout styles */
-        .main-content {display: grid; grid-template-columns: 400px 1fr; gap: 20px;}
-        .passenger-form-card {height: fit-content; position: sticky; top: 20px;}
-        .passenger-list-card {grid-column: 2 / 3;}
-        .passenger-form-card {grid-column: 1 / 2;}
-        .stats-grid {grid-column: 1 / 3;}
+        /* Status Filter */
+        .status-filter-container {display: flex; align-items: center; gap: 8px; margin-bottom: 12px;}
+        .status-filter-label {font-size: 12px; font-weight: 500; color:var(--text);}
+        .status-filter {width: auto; min-width: 140px;}
         
-        /* Loading indicator */
+        /* Footer */
+        .card-footer {display:flex; justify-content:flex-end; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);}
+        
+        /* Loading Spinner */
         .loading {opacity: 0.6; pointer-events: none;}
         .spinner {
             border: 2px solid #f3f3f3;
-            border-top: 2px solid var(--primary);
+            border-top: 2px solid var(--blue);
             border-radius: 50%;
             width: 16px;
             height: 16px;
@@ -160,29 +164,30 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* New styles for the redesigned table */
-        .status-filter-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-        .status-filter-label {
-            font-size: 12px;
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 6px;
+            color: white;
             font-weight: 500;
-            color: var(--secondary);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
         }
-        .status-filter {
-            width: auto;
-            min-width: 140px;
+        .notification.show {
+            transform: translateX(0);
         }
-        .single-date-filter {
-            display: flex;
-            gap: 8px;
-            align-items: center;
+        .notification.success {
+            background: var(--success);
+            border-left: 4px solid var(--gold);
         }
-        .single-date-filter input {
-            width: auto;
+        .notification.error {
+            background: var(--danger);
+            border-left: 4px solid var(--gold);
         }
         
         @media (max-width: 1024px) {
@@ -251,11 +256,31 @@
                 </div>
                 <div>
                     <div id="shiftName">Loading shift status...</div>
-                    <div id="shiftTime" style="font-size:11px; color:var(--secondary);"></div>
+                    <div id="shiftTime" style="font-size:11px; color:var(--text);"></div>
                 </div>
             </div>
         </div>
     </header>
+
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value" id="totalPassengers">0</div>
+            <div class="stat-label">Total Passengers</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="todayPassengers">0</div>
+            <div class="stat-label">Today's Passengers</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="activeFlights">0</div>
+            <div class="stat-label">Active Flights</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="pendingApprovals">0</div>
+            <div class="stat-label">Pending Approvals</div>
+        </div>
+    </div>
 
     <div class="main-content">
         <!-- Passenger Entry Card - Left Side -->
@@ -265,7 +290,7 @@
             </div>
 
             <form id="passengerForm">
-                <!-- QR Scanner Section - At the top -->
+                <!-- QR Scanner Section -->
                 <div class="form-section">
                     <div class="qr-section">
                         <div class="qr-label">
@@ -327,7 +352,7 @@
 
                 <!-- Additional Information Section -->
                 <div class="form-section">
-                    <div class="section-title">Additional Information</div>
+                    <div class="section-title" style="font-size:14px; font-weight:600; margin-bottom:8px;">Additional Information</div>
                     <div class="form-row compact-form-row">
                         <div class="form-group">
                             <label for="fqtv">FQTV Number</label>
@@ -442,31 +467,12 @@
             </div>
         </div>
     </div>
-
-    <!-- Stats Overview - Moved to bottom -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-value" id="totalPassengers">0</div>
-            <div class="stat-label">Total Passengers</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value" id="todayPassengers">0</div>
-            <div class="stat-label">Today's Passengers</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value" id="activeFlights">0</div>
-            <div class="stat-label">Active Flights</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value" id="pendingApprovals">0</div>
-            <div class="stat-label">Pending Approvals</div>
-        </div>
-    </div>
 </div>
 
+<!-- Notification -->
+<div id="notification" class="notification"></div>
+
 <!-- Firebase and Company Scripts -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script src="fire.js"></script>
 <script src="Co.js"></script>
 <script>
@@ -486,7 +492,6 @@ const shiftStatus = document.getElementById("shiftStatus");
 const shiftName = document.getElementById("shiftName");
 const shiftTime = document.getElementById("shiftTime");
 const emptyState = document.getElementById("emptyState");
-const globalStatusBadge = document.getElementById("globalStatusBadge");
 const searchInput = document.getElementById("searchInput");
 const dateFilter = document.getElementById("dateFilter");
 const applyDateFilter = document.getElementById("applyDateFilter");
@@ -518,98 +523,62 @@ dateFilter.value = today;
 // ----------- Fetch current shift from Firestore -----------
 async function fetchCurrentShift() {
   try {
-    console.log("Starting shift fetch...");
-    
-    if (!db) {
-      console.error("Firebase Firestore is not initialized");
-      throw new Error("Firestore not available");
-    }
+    const snapshot = await db.collection("shifts").limit(1).get();
 
-    const today = new Date().toISOString().split('T')[0];
-    console.log("Looking for shifts for date:", today);
-
-    let shiftLabel = "No Shift Data";
-    let shiftType = "";
+    let shiftLabel = "No Shift Open";
     let enableEntry = false;
-    let shiftTimeText = "No shift data available";
-
-    const snapshot = await db.collection("shifts")
-      .where("date", "==", today)
-      .limit(1)
-      .get();
-
-    console.log("Query completed. Found documents:", snapshot.size);
+    let isActive = false;
 
     if (!snapshot.empty) {
-      const shiftDoc = snapshot.docs[0];
-      const data = shiftDoc.data();
-      
-      console.log("✅ Shift document found:", data);
-      console.log("Document ID:", shiftDoc.id);
+      const docRef = snapshot.docs[0].ref;
+      const data = snapshot.docs[0].data();
 
-      if (data.shift1 && data.shift1.status === "Open") {
-        console.log("✅ Shift1 is Open");
-        shiftLabel = "Morning Shift - OPEN";
-        shiftType = "Morning";
-        enableEntry = true;
-        shiftStatus.className = "shift-status open";
-        shiftTimeText = `Opened at: ${data.shift1.openedAt || "N/A"}`;
-      } 
-      else if (data.shift2 && data.shift2.status === "Open") {
-        console.log("✅ Shift2 is Open");
-        shiftLabel = "Evening Shift - OPEN";
-        shiftType = "Evening";
-        enableEntry = true;
-        shiftStatus.className = "shift-status open";
-        shiftTimeText = `Opened at: ${data.shift2.openedAt || "N/A"}`;
-      } 
-      else {
-        console.log("❌ No open shifts found");
-        shiftLabel = "No Shift Open";
-        shiftStatus.className = "shift-status closed";
-        
-        const shift1Status = data.shift1 ? data.shift1.status : "No data";
-        const shift2Status = data.shift2 ? data.shift2.status : "No data";
-        shiftTimeText = `Morning: ${shift1Status}, Evening: ${shift2Status}`;
+      // Handle date change if both shifts were closed yesterday
+      if (data.date !== today && 
+          data.shift1?.status === "Closed" && 
+          data.shift2?.status === "Closed") {
+
+        await docRef.update({
+          date: today,
+          "shift1.status": "Pending",
+          "shift1.openedAt": "",
+          "shift1.closedAt": "",
+          "shift2.status": "Pending",
+          "shift2.openedAt": "",
+          "shift2.closedAt": ""
+        });
+
+        data.date = today;
+        data.shift1.status = "Pending";
+        data.shift2.status = "Pending";
       }
-    } else {
-      console.log("❌ No shift document found for today");
-      shiftLabel = "No Shift Data for Today";
-      shiftStatus.className = "shift-status closed";
-      shiftTimeText = `No shift data found for ${today}`;
+
+      // Determine which shift is open
+      if (data.shift1?.status === "Open") {
+        shiftLabel = "Morning Shift";
+        enableEntry = true;
+        isActive = true;
+        currentShift = "Morning";
+      } else if (data.shift2?.status === "Open") {
+        shiftLabel = "Evening Shift";
+        enableEntry = true;
+        isActive = true;
+        currentShift = "Evening";
+      }
     }
 
-    shiftName.textContent = shiftLabel;
-    shiftTime.textContent = shiftTimeText;
-    currentShiftField.value = shiftType;
-    addPassengerBtn.disabled = !enableEntry;
-    currentShift = shiftType;
+    document.getElementById("shiftName").textContent = shiftLabel;
+    currentShiftField.value = currentShift;
     isShiftOpen = enableEntry;
 
-    if (globalStatusBadge) {
-      globalStatusBadge.textContent = enableEntry ? "Shift Open" : "Shift Closed";
-      globalStatusBadge.className = `status-badge ${enableEntry ? "status-open" : "status-closed"}`;
+    // Update shift status display
+    if (isActive) {
+      shiftStatus.className = "shift-status open";
+    } else {
+      shiftStatus.className = "shift-status closed";
     }
-
-    console.log("Shift fetch completed successfully");
-
-  } catch (err) {
-    console.error("❌ Error fetching shift:", err);
-    console.error("Error details:", err.message);
-    
-    shiftName.textContent = "Error Loading Shift";
-    shiftTime.textContent = `Error: ${err.message}`;
-    shiftStatus.className = "shift-status closed";
-    
-    currentShiftField.value = "Error";
-    addPassengerBtn.disabled = false;
-    currentShift = "Morning";
-    isShiftOpen = true;
-    
-    if (globalStatusBadge) {
-      globalStatusBadge.textContent = "System Ready";
-      globalStatusBadge.className = "status-badge status-open";
-    }
+  } catch (error) {
+    console.error("Error fetching shift status:", error);
   }
 }
 
@@ -1086,10 +1055,10 @@ function showQRScanFeedback(message) {
         background: var(--success);
         color: white;
         padding: 10px 15px;
-        border-radius: var(--radius);
+        border-radius: 6px;
         z-index: 1000;
         font-size: 14px;
-        box-shadow: var(--shadow);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     `;
     feedback.textContent = message;
     document.body.appendChild(feedback);
