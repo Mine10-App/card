@@ -100,6 +100,26 @@
             border:1px solid var(--blue);
         }
         
+        /* Light Line Box for Seat, FQTV, Serial, Remarks */
+        .light-box-cell {
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 6px 8px;
+            background: rgba(248, 250, 252, 0.5);
+            min-height: 32px;
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .light-box-cell:focus {
+            background: white;
+            border-color: var(--blue);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+            outline: none;
+        }
+        
         /* Action Buttons */
         .actions-cell {display:flex; gap:8px;}
         .icon-btn {background:none; border:none; cursor:pointer; padding:6px; border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--text); width:36px; height:36px;}
@@ -262,7 +282,6 @@
         </div>
     </header>
 
-    <!-- Stats Overview -->
     
 
     <div class="main-content">
@@ -671,33 +690,157 @@ function renderPassengers(){
         dateTd.appendChild(dateContent);
         row.appendChild(dateTd);
         
-        // Other fields
-        ["airline","flightNo","name","seatNo","fqtv","serial","remarks","numPax"].forEach(field=>{
-            const td = document.createElement("td");
-            const content = document.createElement("div");
-            content.className="editable-cell";
-            content.textContent = p[field] || "";
-            content.contentEditable = true;
-            content.oninput = ()=>{p[field]=(field==="numPax"?parseInt(content.textContent)||1:content.textContent); updateTotal();}
-            content.onblur= async ()=>{
-                try {
-                    await db.collection("passengers").doc(p.id).update({
-                        airline:p.airline,
-                        flightNo:p.flightNo,
-                        name:p.name,
-                        seatNo:p.seatNo,
-                        fqtv:p.fqtv,
-                        serial:p.serial,
-                        remarks:p.remarks,
-                        numPax:p.numPax
-                    });
-                } catch (error) {
-                    console.error("Error updating passenger:", error);
-                }
-            };
-            td.appendChild(content);
-            row.appendChild(td);
-        });
+        // Airline field
+        const airlineTd = document.createElement("td");
+        const airlineContent = document.createElement("div");
+        airlineContent.className="editable-cell";
+        airlineContent.textContent = p.airline || "";
+        airlineContent.contentEditable = true;
+        airlineContent.oninput = ()=>{p.airline=airlineContent.textContent; updateTotal();}
+        airlineContent.onblur= async ()=>{
+            try {
+                await db.collection("passengers").doc(p.id).update({
+                    airline:p.airline
+                });
+            } catch (error) {
+                console.error("Error updating passenger:", error);
+            }
+        };
+        airlineTd.appendChild(airlineContent);
+        row.appendChild(airlineTd);
+        
+        // Flight field
+        const flightTd = document.createElement("td");
+        const flightContent = document.createElement("div");
+        flightContent.className="editable-cell";
+        flightContent.textContent = p.flightNo || "";
+        flightContent.contentEditable = true;
+        flightContent.oninput = ()=>{p.flightNo=flightContent.textContent; updateTotal();}
+        flightContent.onblur= async ()=>{
+            try {
+                await db.collection("passengers").doc(p.id).update({
+                    flightNo:p.flightNo
+                });
+            } catch (error) {
+                console.error("Error updating passenger:", error);
+            }
+        };
+        flightTd.appendChild(flightContent);
+        row.appendChild(flightTd);
+        
+        // Name field
+        const nameTd = document.createElement("td");
+        const nameContent = document.createElement("div");
+        nameContent.className="editable-cell";
+        nameContent.textContent = p.name || "";
+        nameContent.contentEditable = true;
+        nameContent.oninput = ()=>{p.name=nameContent.textContent; updateTotal();}
+        nameContent.onblur= async ()=>{
+            try {
+                await db.collection("passengers").doc(p.id).update({
+                    name:p.name
+                });
+            } catch (error) {
+                console.error("Error updating passenger:", error);
+            }
+        };
+        nameTd.appendChild(nameContent);
+        row.appendChild(nameTd);
+        
+        // Seat field with light box
+        const seatTd = document.createElement("td");
+        const seatContent = document.createElement("div");
+        seatContent.className="light-box-cell";
+        seatContent.textContent = p.seatNo || "";
+        seatContent.contentEditable = true;
+        seatContent.oninput = ()=>{p.seatNo=seatContent.textContent; updateTotal();}
+        seatContent.onblur= async ()=>{
+            try {
+                await db.collection("passengers").doc(p.id).update({
+                    seatNo:p.seatNo
+                });
+            } catch (error) {
+                console.error("Error updating passenger:", error);
+            }
+        };
+        seatTd.appendChild(seatContent);
+        row.appendChild(seatTd);
+        
+        // FQTV field with light box
+        const fqtvTd = document.createElement("td");
+        const fqtvContent = document.createElement("div");
+        fqtvContent.className="light-box-cell";
+        fqtvContent.textContent = p.fqtv || "";
+        fqtvContent.contentEditable = true;
+        fqtvContent.oninput = ()=>{p.fqtv=fqtvContent.textContent; updateTotal();}
+        fqtvContent.onblur= async ()=>{
+            try {
+                await db.collection("passengers").doc(p.id).update({
+                    fqtv:p.fqtv
+                });
+            } catch (error) {
+                console.error("Error updating passenger:", error);
+            }
+        };
+        fqtvTd.appendChild(fqtvContent);
+        row.appendChild(fqtvTd);
+        
+        // Serial field with light box
+        const serialTd = document.createElement("td");
+        const serialContent = document.createElement("div");
+        serialContent.className="light-box-cell";
+        serialContent.textContent = p.serial || "";
+        serialContent.contentEditable = true;
+        serialContent.oninput = ()=>{p.serial=serialContent.textContent; updateTotal();}
+        serialContent.onblur= async ()=>{
+            try {
+                await db.collection("passengers").doc(p.id).update({
+                    serial:p.serial
+                });
+            } catch (error) {
+                console.error("Error updating passenger:", error);
+            }
+        };
+        serialTd.appendChild(serialContent);
+        row.appendChild(serialTd);
+        
+        // Remarks field with light box
+        const remarksTd = document.createElement("td");
+        const remarksContent = document.createElement("div");
+        remarksContent.className="light-box-cell";
+        remarksContent.textContent = p.remarks || "";
+        remarksContent.contentEditable = true;
+        remarksContent.oninput = ()=>{p.remarks=remarksContent.textContent; updateTotal();}
+        remarksContent.onblur= async ()=>{
+            try {
+                await db.collection("passengers").doc(p.id).update({
+                    remarks:p.remarks
+                });
+            } catch (error) {
+                console.error("Error updating passenger:", error);
+            }
+        };
+        remarksTd.appendChild(remarksContent);
+        row.appendChild(remarksTd);
+        
+        // Pax field
+        const paxTd = document.createElement("td");
+        const paxContent = document.createElement("div");
+        paxContent.className="editable-cell";
+        paxContent.textContent = p.numPax || 1;
+        paxContent.contentEditable = true;
+        paxContent.oninput = ()=>{p.numPax=parseInt(paxContent.textContent)||1; updateTotal();}
+        paxContent.onblur= async ()=>{
+            try {
+                await db.collection("passengers").doc(p.id).update({
+                    numPax:p.numPax
+                });
+            } catch (error) {
+                console.error("Error updating passenger:", error);
+            }
+        };
+        paxTd.appendChild(paxContent);
+        row.appendChild(paxTd);
         
         // Check-in time in 24-hour format
         const tdTime = document.createElement("td");
@@ -1161,4 +1304,3 @@ db.collection("passengers")
 </script>
 </body>
 </html>
-
