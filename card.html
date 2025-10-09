@@ -292,6 +292,11 @@
             color: var(--warning);
         }
         
+        .status-approved {
+            background: rgba(16,185,129,0.1);
+            color: var(--success);
+        }
+        
         /* Additional Info Boxes */
         .info-box {
             border: 1px solid #e2e8f0;
@@ -902,8 +907,8 @@ function renderPassengers() {
         // Status
         const statusTd = document.createElement("td");
         const statusBadge = document.createElement("span");
-        statusBadge.className = "status-badge status-pending";
-        statusBadge.textContent = "Pending";
+        statusBadge.className = `status-badge ${p.approved ? "status-approved" : "status-pending"}`;
+        statusBadge.textContent = p.approved ? "Approved" : "Pending";
         statusTd.appendChild(statusBadge);
         row.appendChild(statusTd);
         
@@ -911,21 +916,23 @@ function renderPassengers() {
         const actionTd = document.createElement("td");
         actionTd.className = "actions-cell";
         
-        // Approve button
-        const approveBtn = document.createElement("button");
-        approveBtn.className = "icon-btn approve-btn";
-        approveBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-        approveBtn.title = "Approve passenger";
-        approveBtn.onclick = async () => {
-            try {
-                await db.collection("passengers").doc(p.id).update({approved: true});
-                showNotification("Passenger approved successfully", "success");
-            } catch (error) {
-                console.error("Error approving passenger:", error);
-                showNotification("Error approving passenger", "error");
-            }
-        };
-        actionTd.appendChild(approveBtn);
+        // Only show approve button for pending passengers
+        if (!p.approved) {
+            const approveBtn = document.createElement("button");
+            approveBtn.className = "icon-btn approve-btn";
+            approveBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+            approveBtn.title = "Approve passenger";
+            approveBtn.onclick = async () => {
+                try {
+                    await db.collection("passengers").doc(p.id).update({approved: true});
+                    showNotification("Passenger approved successfully", "success");
+                } catch (error) {
+                    console.error("Error approving passenger:", error);
+                    showNotification("Error approving passenger", "error");
+                }
+            };
+            actionTd.appendChild(approveBtn);
+        }
         
         // Delete button
         const deleteBtn = document.createElement("button");
@@ -987,6 +994,24 @@ function parseQR(code) {
     return {name, flightNo, seatNo};
 }
 
+// ---------- Clear form fields ----------
+function clearFormFields() {
+    nameField.value = "";
+    seatField.value = "";
+    flightField.value = "";
+    airlineField.value = "";
+    fqtvField.value = "";
+    serialField.value = "";
+    remarksField.value = "";
+    numPaxField.value = 1;
+    qrInput.value = "";
+    
+    // Keep current date
+    form.date.value = today;
+    
+    qrInput.focus();
+}
+
 // ---------- Add passenger ----------
 async function addPassenger() {
     if (!nameField.value || !seatField.value || !flightField.value) {
@@ -997,6 +1022,10 @@ async function addPassenger() {
     // Get current time in 24-hour format
     const now = new Date();
     const timeAdded = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+    // Determine if passenger should be auto-approved
+    // Auto-approve if it's a manual entry with serial number
+    const shouldAutoApprove = !isQREntry && serialField.value.trim() !== "";
 
     const passenger = {
         date: form.date.value,
@@ -1009,25 +1038,21 @@ async function addPassenger() {
         remarks: remarksField.value,
         numPax: parseInt(numPaxField.value) || 1,
         timeAdded: timeAdded,
-        approved: false
+        approved: shouldAutoApprove // Auto-approve manual entries with serial numbers
     };
 
     try {
         await db.collection("passengers").add(passenger);
-        showNotification("Passenger added successfully", "success");
         
-        // Reset form
-        nameField.value = "";
-        seatField.value = "";
-        flightField.value = "";
-        airlineField.value = "";
-        fqtvField.value = "";
-        serialField.value = "";
-        remarksField.value = "";
-        numPaxField.value = 1;
-        qrInput.value = "";
+        if (shouldAutoApprove) {
+            showNotification("Passenger added and auto-approved (has serial number)", "success");
+        } else {
+            showNotification("Passenger added successfully", "success");
+        }
         
-        qrInput.focus();
+        // Clear form fields after successful save
+        clearFormFields();
+        
     } catch (error) {
         console.error("Error adding passenger:", error);
         showNotification("Error adding passenger", "error");
@@ -1135,9 +1160,7 @@ form.addEventListener("submit", async e => {
 
 // Clear form button
 clearBtn.addEventListener("click", () => {
-    form.reset();
-    form.date.value = today;
-    airlineField.value = "";
+    clearFormFields();
     isQREntry = false;
 });
 
