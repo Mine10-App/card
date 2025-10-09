@@ -3,331 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Passenger Approval System</title>
+    <title>Passenger Management System</title>
     <!-- Firebase and QR Code Scanner Libraries -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
     <style>
         :root {
-            --primary: #1E3A8A;
-            --primary-light: #3B82F6;
-            --secondary: #D4AF37;
-            --secondary-light: #F5E8B5;
+            --gold: #D4AF37;
+            --gold-light: #F5E8B5;
+            --blue: #1E3A8A;
+            --blue-light: #3B82F6;
+            --white: #FFFFFF;
+            --light-gray: #F8FAFC;
+            --text: #334155;
+            --border: #E2E8F0;
             --success: #10B981;
             --danger: #EF4444;
             --warning: #F59E0B;
-            --light: #F8FAFC;
-            --white: #FFFFFF;
-            --text: #334155;
-            --border: #E2E8F0;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background-color: #f1f5f9;
-            color: var(--text);
-            line-height: 1.6;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+        * {margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+        body {background-color:#f1f5f9; color:var(--text); line-height:1.6; padding:20px;}
+        .container {max-width:1400px; margin:0 auto;}
         
         /* Header Styles */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
-            border-bottom: 2px solid var(--secondary);
-        }
+        header {display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; padding-bottom:16px; border-bottom:2px solid var(--gold);}
+        .logo {display:flex; align-items:center; gap:12px;}
+        .logo-icon {width:40px; height:40px; background:var(--blue); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white;}
+        h1 {font-size:24px; font-weight:600; color:var(--blue);}
         
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+        /* Top Right Navigation */
+        .top-right-nav {display:flex; align-items:center; gap:16px;}
+        .nav-buttons {display:flex; gap:12px;}
+        .nav-btn {background:var(--blue); color:white; border:none; cursor:pointer; font-weight:500; display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:10px 16px; font-size:12px; border-radius:6px; text-decoration:none; transition:all 0.2s;}
+        .nav-btn:hover {background:var(--blue-light);}
+        .nav-btn.outline {background:transparent; border:1px solid var(--blue); color:var(--blue);}
+        .nav-btn.outline:hover {background:rgba(37,99,235,0.05);}
         
-        .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-        
-        h1 {
-            font-size: 24px;
-            font-weight: 600;
-            color: var(--primary);
-        }
+        /* Shift Status */
+        .shift-status {display:flex; align-items:center; gap:8px; padding:10px 16px; border-radius:6px; background:var(--white); border:1px solid var(--border);}
+        .shift-status.open {background:rgba(16,185,129,0.1); border:1px solid var(--success);}
+        .shift-status.closed {background:rgba(239,68,68,0.1); border:1px solid var(--danger);}
         
         /* Card Styles */
-        .card {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            padding: 20px;
-            margin-bottom: 24px;
-            border-top: 3px solid var(--secondary);
-        }
-        
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-        
-        .card-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--primary);
-        }
+        .card {background:white; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.05); padding:20px; margin-bottom:24px; border-top:3px solid var(--gold);}
+        .card-header {display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;}
+        .card-title {font-size:16px; font-weight:600; color:var(--blue);}
         
         /* Form Styles */
-        .form-group {
-            margin-bottom: 12px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 4px;
-            font-weight: 500;
-            color: var(--text);
-            font-size: 14px;
-        }
-        
-        input, select, button, textarea {
-            padding: 10px 12px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 14px;
-            transition: all 0.2s;
-            width: 100%;
-        }
-        
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
-        }
-        
-        textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
+        .form-group {margin-bottom:12px;}
+        label {display:block; margin-bottom:4px; font-weight:500; color:var(--text); font-size:12px;}
+        input, select, button {padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:12px; transition: all 0.2s; width:100%;}
+        input:focus, select:focus {outline:none; border-color:var(--blue); box-shadow:0 0 0 2px rgba(37, 99, 235, 0.1);}
         
         /* Button Styles */
-        .btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 10px 16px;
-            font-size: 14px;
-            border-radius: 6px;
-            transition: all 0.2s;
-        }
-        
-        .btn:hover {
-            background: var(--primary-light);
-        }
-        
-        .btn-success {
-            background: var(--success);
-        }
-        
-        .btn-success:hover {
-            background: #0da271;
-        }
-        
-        .btn-danger {
-            background: var(--danger);
-        }
-        
-        .btn-danger:hover {
-            background: #dc2626;
-        }
-        
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--primary);
-            color: var(--primary);
-        }
-        
-        .btn-outline:hover {
-            background: rgba(37,99,235,0.05);
-        }
+        .btn {background:var(--blue); color:white; border:none; cursor:pointer; font-weight:500; display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:8px 12px; font-size:12px; border-radius:6px;}
+        .btn:hover {background:var(--blue-light);}
+        .btn-success {background:var(--success);}
+        .btn-success:hover {background:#0da271;}
+        .btn-danger {background:var(--danger);}
+        .btn-danger:hover {background:#dc2626;}
+        .btn-outline {background:transparent; border:1px solid var(--blue); color:var(--blue);}
+        .btn-outline:hover {background:rgba(37,99,235,0.05);}
         
         /* Layout */
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
-        }
-        
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 20px;
-        }
+        .form-row {display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:12px;}
+        .main-content {display: grid; grid-template-columns: 400px 1fr; gap: 20px;}
+        .passenger-form-card {height: fit-content; position: sticky; top: 20px;}
+        .passenger-list-card {grid-column: 2 / 3;}
+        .passenger-form-card {grid-column: 1 / 2;}
+        .stats-grid {grid-column: 1 / 3; display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:12px; margin-bottom:20px;}
         
         /* QR Section */
-        .qr-section {
-            background: #f0f9ff;
-            border-radius: 6px;
-            padding: 12px;
-            margin-bottom: 16px;
-            border: 1px dashed var(--primary);
-        }
-        
-        .qr-label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 6px;
-            color: var(--primary);
-            font-weight: 500;
-            font-size: 14px;
-        }
+        .qr-section {background:#f0f9ff; border-radius:6px; padding:12px; margin-bottom:16px; border:1px dashed var(--blue);}
+        .qr-label {display:flex; align-items:center; gap:6px; margin-bottom:6px; color:var(--blue); font-weight:500; font-size:12px;}
         
         /* Table Styles */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 12px;
+        table {width:100%; border-collapse:collapse; margin-top:12px;}
+        th {background:var(--light-gray); padding:10px; text-align:left; font-weight:600; color:var(--text); font-size:12px; border-bottom:1px solid var(--border);}
+        td {padding:10px; border-bottom:1px solid var(--border); font-size:12px;}
+        tr:hover {background: rgba(37, 99, 235, 0.02);}
+        
+        /* Editable Cells */
+        .editable-cell {
+            border-radius:4px; 
+            padding:4px 6px; 
+            outline:none; 
+            min-height:18px; 
+            font-size:12px;
+            background: transparent;
+            border: 1px solid transparent;
+        }
+        .editable-cell:focus {
+            background:rgba(37, 99, 235, 0.05);
+            border:1px solid var(--blue);
         }
         
-        th {
-            background: var(--light);
-            padding: 12px;
-            text-align: left;
-            font-weight: 600;
-            color: var(--text);
-            font-size: 14px;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        td {
-            padding: 12px;
-            border-bottom: 1px solid var(--border);
-            font-size: 14px;
-        }
-        
-        tr:hover {
-            background: rgba(37, 99, 235, 0.02);
-        }
-        
-        /* Action Buttons */
-        .actions-cell {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .icon-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text);
-            width: 40px;
-            height: 40px;
-        }
-        
-        .icon-btn:hover {
-            background: var(--light);
-        }
-        
-        .approve-btn {
-            color: var(--success);
-        }
-        
-        .approve-btn:hover {
-            background: rgba(16,185,129,0.1);
-        }
-        
-        .delete-btn {
-            color: var(--danger);
-        }
-        
-        .delete-btn:hover {
-            background: rgba(239,68,68,0.1);
-        }
-        
-        /* Status Badges */
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        
-        .status-pending {
-            background: rgba(245,158,11,0.1);
-            color: var(--warning);
-        }
-        
-        .status-approved {
-            background: rgba(16,185,129,0.1);
-            color: var(--success);
-        }
-        
-        /* Additional Info Boxes */
-        .info-box {
+        /* Light Line Box for Seat, FQTV, Serial, Remarks */
+        .light-box-cell {
             border: 1px solid #e2e8f0;
             border-radius: 4px;
-            padding: 8px 10px;
+            padding: 6px 8px;
             background: rgba(248, 250, 252, 0.5);
-            min-height: 40px;
+            min-height: 32px;
             display: flex;
             align-items: center;
-            font-size: 14px;
+            font-size: 12px;
             transition: all 0.2s ease;
         }
         
-        .info-box:focus {
+        .light-box-cell:focus {
             background: white;
-            border-color: var(--primary);
+            border-color: var(--blue);
             box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
             outline: none;
         }
         
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 40px 15px;
-            color: var(--text);
-        }
+        /* Action Buttons */
+        .actions-cell {display:flex; gap:8px;}
+        .icon-btn {background:none; border:none; cursor:pointer; padding:6px; border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--text); width:36px; height:36px;}
+        .icon-btn:hover {background:var(--light-gray);}
+        .save-btn {color:var(--success);}
+        .save-btn:hover {background:rgba(16,185,129,0.1);}
+        .delete-btn {color:var(--danger);}
+        .delete-btn:hover {background:rgba(239,68,68,0.1);}
         
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 12px;
-            opacity: 0.5;
+        /* Status Badges */
+        .status-badge {display:inline-flex; align-items:center; padding:3px 8px; border-radius:20px; font-size:10px; font-weight:500;}
+        .status-open {background:rgba(16,185,129,0.1); color:var(--success);}
+        .status-closed {background:rgba(239,68,68,0.1); color:var(--danger);}
+        
+        /* Stats Cards */
+        .stat-card {background:white; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.05); padding:12px; display:flex; flex-direction:column; border-top:2px solid var(--gold);}
+        .stat-value {font-size:20px; font-weight:700; color:var(--blue); margin-bottom:4px;}
+        .stat-label {font-size:12px; color:var(--text);}
+        
+        /* Filter and Search */
+        .action-bar {display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
+        .table-actions {display:flex; gap:6px; align-items:center;}
+        .search-box {max-width:250px;}
+        .filter-group {display:flex; gap:8px; align-items:center;}
+        .filter-select {width:auto; min-width:100px; font-size:12px; padding:6px 8px;}
+        
+        /* Empty State */
+        .empty-state {text-align:center; padding:30px 15px; color:var(--text);}
+        .empty-state-icon {font-size:36px; margin-bottom:12px; opacity:0.5;}
+        
+        /* Compact Styles */
+        .compact-input {padding: 6px 8px; font-size: 12px;}
+        .compact-form-row {grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px;}
+        
+        /* Date Filter */
+        .date-filter-container {display: flex; gap: 8px; align-items: center;}
+        .single-date-filter {display: flex; gap: 8px; align-items: center;}
+        .single-date-filter input {width: auto;}
+        
+        /* Status Filter */
+        .status-filter-container {display: flex; align-items: center; gap: 8px; margin-bottom: 12px;}
+        .status-filter-label {font-size: 12px; font-weight: 500; color:var(--text);}
+        .status-filter {width: auto; min-width: 140px;}
+        
+        /* Footer */
+        .card-footer {display:flex; justify-content:flex-end; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);}
+        
+        /* Loading Spinner */
+        .loading {opacity: 0.6; pointer-events: none;}
+        .spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--blue);
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         
         /* Notification */
@@ -344,135 +198,33 @@
             transform: translateX(120%);
             transition: transform 0.3s ease;
         }
-        
         .notification.show {
             transform: translateX(0);
         }
-        
         .notification.success {
             background: var(--success);
-            border-left: 4px solid var(--secondary);
+            border-left: 4px solid var(--gold);
         }
-        
         .notification.error {
             background: var(--danger);
-            border-left: 4px solid var(--secondary);
+            border-left: 4px solid var(--gold);
         }
         
-        /* Floating Action Buttons */
-        .floating-buttons {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            z-index: 100;
-        }
-        
-        .floating-btn {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        
-        .floating-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-        }
-        
-        .floating-btn.dashboard {
-            background: var(--primary);
-            color: white;
-        }
-        
-        .floating-btn.report {
-            background: var(--secondary);
-            color: white;
-        }
-        
-        .floating-btn .tooltip {
-            position: absolute;
-            right: 70px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-            white-space: nowrap;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
-        }
-        
-        .floating-btn:hover .tooltip {
-            opacity: 1;
-        }
-        
-        /* Shift Status */
-        .shift-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 16px;
-            border-radius: 6px;
-            background: var(--white);
-            border: 1px solid var(--border);
-        }
-        
-        .shift-status.open {
-            background: rgba(16,185,129,0.1);
-            border: 1px solid var(--success);
-        }
-        
-        .shift-status.closed {
-            background: rgba(239,68,68,0.1);
-            border: 1px solid var(--danger);
-        }
-        
-        /* Responsive */
         @media (max-width: 1024px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
+            .main-content {grid-template-columns: 1fr;}
+            .passenger-list-card, .passenger-form-card {grid-column: 1 / 2;}
+            .nav-buttons {flex-wrap: wrap;}
+            .top-right-nav {flex-direction: column; align-items: flex-end; gap: 8px;}
         }
         
-        @media (max-width: 768px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            
-            table {
-                display: block;
-                overflow-x: auto;
-            }
-            
-            .actions-cell {
-                flex-direction: column;
-            }
-            
-            header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-            }
-            
-            .floating-buttons {
-                bottom: 20px;
-                right: 20px;
-            }
-            
-            .floating-btn {
-                width: 50px;
-                height: 50px;
-            }
+        @media (max-width:768px){
+            .form-row {grid-template-columns:1fr;}
+            table {display:block; overflow-x:auto;}
+            .actions-cell {flex-direction:column;}
+            .action-bar {flex-direction:column; align-items:stretch; gap:8px;}
+            .filter-group {flex-wrap:wrap;}
+            .date-filter {flex-wrap: wrap;}
+            .top-right-nav {align-items: flex-start;}
         }
     </style>
 </head>
@@ -487,25 +239,54 @@
                     <path d="M12 12l-3 3"></path>
                 </svg>
             </div>
-            <h1>Passenger Approval System</h1>
+            <h1>Passenger Management System</h1>
         </div>
-        <div class="shift-status" id="shiftStatus">
-            <div id="shiftIcon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
+        <div class="top-right-nav">
+            <!-- Navigation Buttons -->
+            <div class="nav-buttons">
+                <a href="dashboard.html" class="nav-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    Dashboard
+                </a>
+                <a href="updateCard.html" class="nav-btn outline">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        <polyline points="7.5 4.21 12 6.81 16.5 4.21"></polyline>
+                        <polyline points="7.5 19.79 7.5 14.6 3 12"></polyline>
+                        <polyline points="21 12 16.5 14.6 16.5 19.79"></polyline>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                    Airline Report
+                </a>
             </div>
-            <div>
-                <div id="shiftName">Loading shift status...</div>
-                <div id="shiftTime" style="font-size:11px; color:var(--text);"></div>
+            
+            <!-- Shift Status Display -->
+            <div class="shift-status" id="shiftStatus">
+                <div id="shiftIcon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </div>
+                <div>
+                    <div id="shiftName">Loading shift status...</div>
+                    <div id="shiftTime" style="font-size:11px; color:var(--text);"></div>
+                </div>
             </div>
         </div>
     </header>
 
+    
+
     <div class="main-content">
-        <!-- Quick Entry Card -->
-        <div class="card">
+        <!-- Passenger Entry Card - Left Side -->
+        <div class="card passenger-form-card">
             <div class="card-header">
                 <div class="card-title">Quick Passenger Entry</div>
             </div>
@@ -515,7 +296,7 @@
                 <div class="form-section">
                     <div class="qr-section">
                         <div class="qr-label">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                                 <path d="M7 7h.01"></path>
                                 <path d="M17 7h.01"></path>
@@ -524,71 +305,80 @@
                             </svg>
                             QR Code Scanner
                         </div>
-                        <input type="text" id="qrInput" placeholder="Paste QR code here">
+                        <input type="text" id="qrInput" class="compact-input" placeholder="Paste QR code here">
                     </div>
                 </div>
 
                 <!-- Quick Entry Section -->
                 <div class="form-section">
-                    <div class="form-row">
+                    <div class="form-row compact-form-row">
                         <div class="form-group">
                             <label for="name">Passenger Name</label>
-                            <input type="text" id="name" placeholder="Name" required>
+                            <input type="text" id="name" class="compact-input" placeholder="Name" required>
                         </div>
                         <div class="form-group">
                             <label for="seatNo">Seat Number</label>
-                            <input type="text" id="seatNo" placeholder="Seat No" required>
+                            <input type="text" id="seatNo" class="compact-input" placeholder="Seat No" required>
                         </div>
                     </div>
                     
-                    <div class="form-row">
+                    <div class="form-row compact-form-row">
                         <div class="form-group">
                             <label for="flightNo">Flight Number</label>
-                            <input type="text" id="flightNo" placeholder="Flight No" required>
+                            <input type="text" id="flightNo" class="compact-input" placeholder="Flight No" required>
                         </div>
                         <div class="form-group">
                             <label for="airline">Airline</label>
-                            <input type="text" id="airline" placeholder="Auto-filled from flight" readonly>
+                            <input type="text" id="airline" class="compact-input" placeholder="Auto-filled from flight" readonly>
                         </div>
                     </div>
                     
-                    <div class="form-row">
+                    <div class="form-row compact-form-row">
+                        <div class="form-group">
+                            <label for="numPax">Pax</label>
+                            <input type="number" id="numPax" class="compact-input" value="1" min="1" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row compact-form-row">
                         <div class="form-group">
                             <label for="date">Date</label>
-                            <input type="date" id="date" required>
+                            <input type="date" id="date" class="compact-input" required>
                         </div>
                         <div class="form-group">
-                            <label for="numPax">Number of Passengers</label>
-                            <input type="number" id="numPax" value="1" min="1" required>
+                            <label for="currentShift">Current Shift</label>
+                            <input type="text" id="currentShift" class="compact-input" readonly>
                         </div>
                     </div>
                 </div>
 
                 <!-- Additional Information Section -->
                 <div class="form-section">
-                    <div class="section-title" style="font-size:16px; font-weight:600; margin-bottom:8px;">Additional Information</div>
-                    <div class="form-row">
+                    <div class="section-title" style="font-size:14px; font-weight:600; margin-bottom:8px;">Additional Information</div>
+                    <div class="form-row compact-form-row">
                         <div class="form-group">
                             <label for="fqtv">FQTV Number</label>
-                            <input type="text" id="fqtv" placeholder="FQTV Number">
+                            <input type="text" id="fqtv" class="compact-input" placeholder="FQTV">
                         </div>
                         <div class="form-group">
                             <label for="serial">Serial Number</label>
-                            <input type="text" id="serial" placeholder="Serial Number">
+                            <input type="text" id="serial" class="compact-input" placeholder="Serial">
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="remarks">Remarks</label>
-                        <textarea id="remarks" placeholder="Additional remarks"></textarea>
+                        <input type="text" id="remarks" class="compact-input" placeholder="Remarks">
                     </div>
                 </div>
 
                 <!-- Form Actions -->
-                <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
-                    <button type="button" class="btn-outline" id="clearBtn">Clear</button>
+                <div class="card-footer">
+                    <button type="button" class="btn-outline" id="clearBtn" style="margin-right:8px;">Clear</button>
                     <button type="submit" class="btn" id="addPassengerBtn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 5v14M5 12h14"></path>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
                         </svg>
                         Add Passenger
                     </button>
@@ -596,11 +386,52 @@
             </form>
         </div>
 
-        <!-- Pending Approvals Card -->
-        <div class="card">
+        <!-- Passenger Table Card - Right Side (Larger) -->
+        <div class="card passenger-list-card" style="min-height: 600px;">
             <div class="card-header">
-                <div class="card-title">Pending Approvals</div>
+                <div class="card-title">Passenger List</div>
                 <div class="passenger-count">Total: <span id="paxCount">0</span> Passengers</div>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="status-filter-container">
+                <span class="status-filter-label">Status:</span>
+                <select class="filter-select status-filter" id="statusFilter">
+                    <option value="all">All Passengers</option>
+                    <option value="pending">Pending Approvals</option>
+                    <option value="approved">Approved</option>
+                </select>
+            </div>
+
+            <!-- Table Actions -->
+            <div class="action-bar">
+                <div class="table-actions">
+                    <div class="form-group search-box">
+                        <input type="text" id="searchInput" class="compact-input" style="width: auto;" placeholder="Search passengers...">
+                    </div>
+                    <div class="filter-group">
+                        <div class="single-date-filter">
+                            <input type="date" id="dateFilter" class="compact-input" style="width: auto;">
+                            <button type="button" class="btn-outline" id="applyDateFilter" style="width: auto; padding: 6px 10px;">Apply</button>
+                        </div>
+                        <select class="filter-select compact-input" id="shiftFilter">
+                            <option value="all">All Shifts</option>
+                            <option value="Morning">Morning Shift</option>
+                            <option value="Evening">Evening Shift</option>
+                        </select>
+                        <select class="filter-select compact-input" id="airlineFilter">
+                            <option value="all">All Airlines</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn-outline" id="exportBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Export
+                </button>
             </div>
 
             <div class="table-container">
@@ -616,7 +447,7 @@
                             <th>Serial</th>
                             <th>Remarks</th>
                             <th>Pax</th>
-                            <th>Time Added</th>
+                            <th>Check-In</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -625,42 +456,18 @@
                 </table>
                 <div id="emptyState" class="empty-state" style="display:none;">
                     <div class="empty-state-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                             <circle cx="9" cy="7" r="4"></circle>
                             <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                         </svg>
                     </div>
-                    <h3>No Pending Approvals</h3>
-                    <p>All passengers have been approved.</p>
+                    <h3>No Passengers Found</h3>
+                    <p>Add passengers using the form above or scan QR codes.</p>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-
-<!-- Floating Action Buttons -->
-<div class="floating-buttons">
-    <div class="floating-btn dashboard" id="dashboardBtn">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7"></rect>
-            <rect x="14" y="3" width="7" height="7"></rect>
-            <rect x="14" y="14" width="7" height="7"></rect>
-            <rect x="3" y="14" width="7" height="7"></rect>
-        </svg>
-        <span class="tooltip">Dashboard</span>
-    </div>
-    <div class="floating-btn report" id="reportBtn">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-            <polyline points="7.5 4.21 12 6.81 16.5 4.21"></polyline>
-            <polyline points="7.5 19.79 7.5 14.6 3 12"></polyline>
-            <polyline points="21 12 16.5 14.6 16.5 19.79"></polyline>
-            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-            <line x1="12" y1="22.08" x2="12" y2="12"></line>
-        </svg>
-        <span class="tooltip">Airline Report</span>
     </div>
 </div>
 
@@ -681,341 +488,535 @@ const flightField = document.getElementById("flightNo");
 const seatField = document.getElementById("seatNo");
 const numPaxField = document.getElementById("numPax");
 const airlineField = document.getElementById("airline");
-const fqtvField = document.getElementById("fqtv");
-const serialField = document.getElementById("serial");
-const remarksField = document.getElementById("remarks");
-const emptyState = document.getElementById("emptyState");
-const clearBtn = document.getElementById("clearBtn");
-const shiftName = document.getElementById("shiftName");
+const currentShiftField = document.getElementById("currentShift");
+const addPassengerBtn = document.getElementById("addPassengerBtn");
 const shiftStatus = document.getElementById("shiftStatus");
+const shiftName = document.getElementById("shiftName");
 const shiftTime = document.getElementById("shiftTime");
-const dashboardBtn = document.getElementById("dashboardBtn");
-const reportBtn = document.getElementById("reportBtn");
+const emptyState = document.getElementById("emptyState");
+const searchInput = document.getElementById("searchInput");
+const dateFilter = document.getElementById("dateFilter");
+const applyDateFilter = document.getElementById("applyDateFilter");
+const shiftFilter = document.getElementById("shiftFilter");
+const airlineFilter = document.getElementById("airlineFilter");
+const statusFilter = document.getElementById("statusFilter");
+const exportBtn = document.getElementById("exportBtn");
+const totalPassengers = document.getElementById("totalPassengers");
+const todayPassengers = document.getElementById("todayPassengers");
+const activeFlights = document.getElementById("activeFlights");
+const pendingApprovals = document.getElementById("pendingApprovals");
+const clearBtn = document.getElementById("clearBtn");
 
-// Set current date
-const today = new Date().toISOString().split("T")[0];
-form.date.value = today;
+// Current shift variables
+let currentShift = "";
+let isShiftOpen = false;
 
 // Track if current entry is from QR scan
 let isQREntry = false;
 
-// Passenger list
-let passengerList = [];
+// Track current status filter
+let currentStatusFilter = "all";
 
-// ----------- Fetch current shift -----------
+// Set current date
+const today = new Date().toISOString().split("T")[0];
+form.date.value = today;
+dateFilter.value = today;
+
+// ----------- Fetch current shift from Firestore -----------
 async function fetchCurrentShift() {
-    try {
-        const snapshot = await db.collection("shifts").limit(1).get();
-        
-        if (!snapshot.empty) {
-            const docRef = snapshot.docs[0].ref;
-            const data = snapshot.docs[0].data();
-            
-            // Handle date change if both shifts were closed yesterday
-            if (data.date !== today && 
-                data.shift1?.status === "Closed" && 
-                data.shift2?.status === "Closed") {
+  try {
+    const snapshot = await db.collection("shifts").limit(1).get();
 
-                await docRef.update({
-                    date: today,
-                    "shift1.status": "Pending",
-                    "shift1.openedAt": "",
-                    "shift1.closedAt": "",
-                    "shift2.status": "Pending",
-                    "shift2.openedAt": "",
-                    "shift2.closedAt": ""
-                });
+    let shiftLabel = "No Shift Open";
+    let enableEntry = false;
+    let isActive = false;
 
-                data.date = today;
-                data.shift1.status = "Pending";
-                data.shift2.status = "Pending";
-            }
+    if (!snapshot.empty) {
+      const docRef = snapshot.docs[0].ref;
+      const data = snapshot.docs[0].data();
 
-            // Determine which shift is open
-            let shiftLabel = "No Shift Open";
-            let enableEntry = false;
-            let isActive = false;
-            let currentShift = "";
-            let shiftOpenedAt = "";
+      // Handle date change if both shifts were closed yesterday
+      if (data.date !== today && 
+          data.shift1?.status === "Closed" && 
+          data.shift2?.status === "Closed") {
 
-            if (data.shift1?.status === "Open") {
-                shiftLabel = "Morning Shift";
-                enableEntry = true;
-                isActive = true;
-                currentShift = "Morning";
-                shiftOpenedAt = data.shift1.openedAt || "";
-            } else if (data.shift2?.status === "Open") {
-                shiftLabel = "Evening Shift";
-                enableEntry = true;
-                isActive = true;
-                currentShift = "Evening";
-                shiftOpenedAt = data.shift2.openedAt || "";
-            }
+        await docRef.update({
+          date: today,
+          "shift1.status": "Pending",
+          "shift1.openedAt": "",
+          "shift1.closedAt": "",
+          "shift2.status": "Pending",
+          "shift2.openedAt": "",
+          "shift2.closedAt": ""
+        });
 
-            shiftName.textContent = shiftLabel;
-            
-            // Update shift time display
-            if (shiftOpenedAt) {
-                shiftTime.textContent = `Opened at: ${shiftOpenedAt}`;
-            } else {
-                shiftTime.textContent = "";
-            }
+        data.date = today;
+        data.shift1.status = "Pending";
+        data.shift2.status = "Pending";
+      }
 
-            // Update shift status display
-            if (isActive) {
-                shiftStatus.className = "shift-status open";
-            } else {
-                shiftStatus.className = "shift-status closed";
-            }
-        } else {
-            shiftName.textContent = "No Shift Data";
-            shiftStatus.className = "shift-status closed";
-        }
-    } catch (error) {
-        console.error("Error fetching shift status:", error);
-        shiftName.textContent = "Error Loading Shift";
-        shiftStatus.className = "shift-status closed";
+      // Determine which shift is open
+      if (data.shift1?.status === "Open") {
+        shiftLabel = "Morning Shift";
+        enableEntry = true;
+        isActive = true;
+        currentShift = "Morning";
+      } else if (data.shift2?.status === "Open") {
+        shiftLabel = "Evening Shift";
+        enableEntry = true;
+        isActive = true;
+        currentShift = "Evening";
+      }
     }
+
+    document.getElementById("shiftName").textContent = shiftLabel;
+    currentShiftField.value = currentShift;
+    isShiftOpen = enableEntry;
+
+    // Update shift status display
+    if (isActive) {
+      shiftStatus.className = "shift-status open";
+    } else {
+      shiftStatus.className = "shift-status closed";
+    }
+  } catch (error) {
+    console.error("Error fetching shift status:", error);
+  }
 }
 
-// ----------- Fetch pending passengers -----------
-async function fetchPendingPassengers() {
+// Fetch passengers
+let passengerList = [];
+let filteredPassengerList = [];
+
+async function fetchPassengers(){
     try {
         const snapshot = await db.collection("passengers")
-            .where("approved", "==", false)
-            .orderBy("timeAdded", "desc")
-            .get();
-            
-        passengerList = snapshot.docs.map(doc => ({...doc.data(), id: doc.id}));
-        renderPassengers();
+            .orderBy("timeAdded","desc").get();
+        passengerList = snapshot.docs.map(doc=>({...doc.data(), id:doc.id}));
+        
+        // Apply current status filter
+        applyStatusFilter();
+        
+        updateStats();
+        populateAirlineFilter();
     } catch (error) {
         console.error("Error fetching passengers:", error);
     }
 }
 
-// ----------- Render passengers -----------
-function renderPassengers() {
-    if (passengerList.length === 0) {
-        tableBody.innerHTML = "";
-        emptyState.style.display = "block";
-        paxCount.textContent = "0";
-        return;
+// Apply status-based filtering
+function applyStatusFilter() {
+    if (currentStatusFilter === "all") {
+        // Show all passengers
+        filteredPassengerList = [...passengerList];
+    } else if (currentStatusFilter === "pending") {
+        // Show only unapproved passengers
+        filteredPassengerList = passengerList.filter(p => p.approved !== true);
+    } else if (currentStatusFilter === "approved") {
+        // Show only approved passengers
+        filteredPassengerList = passengerList.filter(p => p.approved === true);
     }
     
-    emptyState.style.display = "none";
-    paxCount.textContent = passengerList.reduce((sum, p) => sum + (p.numPax || 1), 0);
-    tableBody.innerHTML = "";
+    // Apply additional filters (search, date, etc.)
+    applyAdditionalFilters();
+}
+
+// Apply search, date, shift, and airline filters
+function applyAdditionalFilters() {
+    let result = [...filteredPassengerList]; // Start with status-filtered list
     
-    passengerList.forEach(p => {
+    // Search filter
+    const searchTerm = searchInput.value.toLowerCase();
+    if(searchTerm){
+        result = result.filter(p => 
+            p.name.toLowerCase().includes(searchTerm) ||
+            p.flightNo.toLowerCase().includes(searchTerm) ||
+            p.airline.toLowerCase().includes(searchTerm) ||
+            (p.seatNo && p.seatNo.toLowerCase().includes(searchTerm))
+        );
+    }
+    
+    // Date filter
+    const dateFilterValue = dateFilter.value;
+    if(dateFilterValue){
+        result = result.filter(p => p.date === dateFilterValue);
+    }
+    
+    // Shift filter
+    const shiftFilterValue = shiftFilter.value;
+    if(shiftFilterValue !== "all"){
+        result = result.filter(p => p.shift === shiftFilterValue);
+    }
+    
+    // Airline filter
+    const airlineFilterValue = airlineFilter.value;
+    if(airlineFilterValue !== "all"){
+        result = result.filter(p => p.airline === airlineFilterValue);
+    }
+    
+    filteredPassengerList = result;
+    renderPassengers();
+}
+
+function renderPassengers(){
+    if(filteredPassengerList.length===0){
+        tableBody.innerHTML="";
+        emptyState.style.display="block";
+        paxCount.textContent="0";
+        return;
+    }
+    emptyState.style.display="none";
+    paxCount.textContent = filteredPassengerList.reduce((sum,p)=>sum+(p.numPax||1),0);
+    tableBody.innerHTML="";
+    filteredPassengerList.forEach(p=>{
         const row = document.createElement("tr");
         
-        // Date
+        // Date field
         const dateTd = document.createElement("td");
-        dateTd.textContent = p.date;
-        row.appendChild(dateTd);
-        
-        // Airline
-        const airlineTd = document.createElement("td");
-        airlineTd.textContent = p.airline || "";
-        row.appendChild(airlineTd);
-        
-        // Flight
-        const flightTd = document.createElement("td");
-        flightTd.textContent = p.flightNo || "";
-        row.appendChild(flightTd);
-        
-        // Name
-        const nameTd = document.createElement("td");
-        nameTd.textContent = p.name || "";
-        row.appendChild(nameTd);
-        
-        // Seat
-        const seatTd = document.createElement("td");
-        seatTd.textContent = p.seatNo || "";
-        row.appendChild(seatTd);
-        
-        // FQTV
-        const fqtvTd = document.createElement("td");
-        const fqtvContent = document.createElement("div");
-        fqtvContent.className = "info-box";
-        fqtvContent.textContent = p.fqtv || "";
-        fqtvContent.contentEditable = true;
-        fqtvContent.onblur = async () => {
+        const dateContent = document.createElement("div");
+        dateContent.className="editable-cell";
+        dateContent.textContent = p.date;
+        dateContent.contentEditable = true;
+        dateContent.oninput = ()=>{p.date=dateContent.textContent; updateTotal();}
+        dateContent.onblur= async ()=>{
             try {
                 await db.collection("passengers").doc(p.id).update({
-                    fqtv: fqtvContent.textContent
+                    date:p.date
                 });
-                showNotification("FQTV updated successfully", "success");
             } catch (error) {
-                console.error("Error updating FQTV:", error);
-                showNotification("Error updating FQTV", "error");
+                console.error("Error updating passenger:", error);
+            }
+        };
+        dateTd.appendChild(dateContent);
+        row.appendChild(dateTd);
+        
+        // Airline field
+        const airlineTd = document.createElement("td");
+        const airlineContent = document.createElement("div");
+        airlineContent.className="editable-cell";
+        airlineContent.textContent = p.airline || "";
+        airlineContent.contentEditable = true;
+        airlineContent.oninput = ()=>{p.airline=airlineContent.textContent; updateTotal();}
+        airlineContent.onblur= async ()=>{
+            try {
+                await db.collection("passengers").doc(p.id).update({
+                    airline:p.airline
+                });
+            } catch (error) {
+                console.error("Error updating passenger:", error);
+            }
+        };
+        airlineTd.appendChild(airlineContent);
+        row.appendChild(airlineTd);
+        
+        // Flight field
+        const flightTd = document.createElement("td");
+        const flightContent = document.createElement("div");
+        flightContent.className="editable-cell";
+        flightContent.textContent = p.flightNo || "";
+        flightContent.contentEditable = true;
+        flightContent.oninput = ()=>{p.flightNo=flightContent.textContent; updateTotal();}
+        flightContent.onblur= async ()=>{
+            try {
+                await db.collection("passengers").doc(p.id).update({
+                    flightNo:p.flightNo
+                });
+            } catch (error) {
+                console.error("Error updating passenger:", error);
+            }
+        };
+        flightTd.appendChild(flightContent);
+        row.appendChild(flightTd);
+        
+        // Name field
+        const nameTd = document.createElement("td");
+        const nameContent = document.createElement("div");
+        nameContent.className="editable-cell";
+        nameContent.textContent = p.name || "";
+        nameContent.contentEditable = true;
+        nameContent.oninput = ()=>{p.name=nameContent.textContent; updateTotal();}
+        nameContent.onblur= async ()=>{
+            try {
+                await db.collection("passengers").doc(p.id).update({
+                    name:p.name
+                });
+            } catch (error) {
+                console.error("Error updating passenger:", error);
+            }
+        };
+        nameTd.appendChild(nameContent);
+        row.appendChild(nameTd);
+        
+        // Seat field with light box
+        const seatTd = document.createElement("td");
+        const seatContent = document.createElement("div");
+        seatContent.className="light-box-cell";
+        seatContent.textContent = p.seatNo || "";
+        seatContent.contentEditable = true;
+        seatContent.oninput = ()=>{p.seatNo=seatContent.textContent; updateTotal();}
+        seatContent.onblur= async ()=>{
+            try {
+                await db.collection("passengers").doc(p.id).update({
+                    seatNo:p.seatNo
+                });
+            } catch (error) {
+                console.error("Error updating passenger:", error);
+            }
+        };
+        seatTd.appendChild(seatContent);
+        row.appendChild(seatTd);
+        
+        // FQTV field with light box
+        const fqtvTd = document.createElement("td");
+        const fqtvContent = document.createElement("div");
+        fqtvContent.className="light-box-cell";
+        fqtvContent.textContent = p.fqtv || "";
+        fqtvContent.contentEditable = true;
+        fqtvContent.oninput = ()=>{p.fqtv=fqtvContent.textContent; updateTotal();}
+        fqtvContent.onblur= async ()=>{
+            try {
+                await db.collection("passengers").doc(p.id).update({
+                    fqtv:p.fqtv
+                });
+            } catch (error) {
+                console.error("Error updating passenger:", error);
             }
         };
         fqtvTd.appendChild(fqtvContent);
         row.appendChild(fqtvTd);
         
-        // Serial
+        // Serial field with light box
         const serialTd = document.createElement("td");
         const serialContent = document.createElement("div");
-        serialContent.className = "info-box";
+        serialContent.className="light-box-cell";
         serialContent.textContent = p.serial || "";
         serialContent.contentEditable = true;
-        serialContent.onblur = async () => {
+        serialContent.oninput = ()=>{p.serial=serialContent.textContent; updateTotal();}
+        serialContent.onblur= async ()=>{
             try {
                 await db.collection("passengers").doc(p.id).update({
-                    serial: serialContent.textContent
+                    serial:p.serial
                 });
-                showNotification("Serial updated successfully", "success");
             } catch (error) {
-                console.error("Error updating serial:", error);
-                showNotification("Error updating serial", "error");
+                console.error("Error updating passenger:", error);
             }
         };
         serialTd.appendChild(serialContent);
         row.appendChild(serialTd);
         
-        // Remarks
+        // Remarks field with light box
         const remarksTd = document.createElement("td");
         const remarksContent = document.createElement("div");
-        remarksContent.className = "info-box";
+        remarksContent.className="light-box-cell";
         remarksContent.textContent = p.remarks || "";
         remarksContent.contentEditable = true;
-        remarksContent.onblur = async () => {
+        remarksContent.oninput = ()=>{p.remarks=remarksContent.textContent; updateTotal();}
+        remarksContent.onblur= async ()=>{
             try {
                 await db.collection("passengers").doc(p.id).update({
-                    remarks: remarksContent.textContent
+                    remarks:p.remarks
                 });
-                showNotification("Remarks updated successfully", "success");
             } catch (error) {
-                console.error("Error updating remarks:", error);
-                showNotification("Error updating remarks", "error");
+                console.error("Error updating passenger:", error);
             }
         };
         remarksTd.appendChild(remarksContent);
         row.appendChild(remarksTd);
         
-        // Pax
+        // Pax field
         const paxTd = document.createElement("td");
-        paxTd.textContent = p.numPax || 1;
+        const paxContent = document.createElement("div");
+        paxContent.className="editable-cell";
+        paxContent.textContent = p.numPax || 1;
+        paxContent.contentEditable = true;
+        paxContent.oninput = ()=>{p.numPax=parseInt(paxContent.textContent)||1; updateTotal();}
+        paxContent.onblur= async ()=>{
+            try {
+                await db.collection("passengers").doc(p.id).update({
+                    numPax:p.numPax
+                });
+            } catch (error) {
+                console.error("Error updating passenger:", error);
+            }
+        };
+        paxTd.appendChild(paxContent);
         row.appendChild(paxTd);
         
-        // Time Added
-        const timeTd = document.createElement("td");
-        timeTd.textContent = p.timeAdded || "";
-        row.appendChild(timeTd);
+        // Check-in time in 24-hour format
+        const tdTime = document.createElement("td");
+        // Convert time to 24-hour format if needed
+        let timeValue = p.timeAdded;
+        if (timeValue && timeValue.includes(' ')) {
+            // Convert from AM/PM to 24-hour format
+            const [timePart, period] = timeValue.split(' ');
+            let [hours, minutes] = timePart.split(':');
+            hours = parseInt(hours);
+            
+            if (period === 'PM' && hours < 12) {
+                hours += 12;
+            } else if (period === 'AM' && hours === 12) {
+                hours = 0;
+            }
+            
+            timeValue = `${hours.toString().padStart(2, '0')}:${minutes}`;
+        }
+        tdTime.textContent = timeValue;
+        row.appendChild(tdTime);
         
-        // Status
-        const statusTd = document.createElement("td");
+        // Status column
+        const tdStatus = document.createElement("td");
         const statusBadge = document.createElement("span");
-        statusBadge.className = `status-badge ${p.approved ? "status-approved" : "status-pending"}`;
+        statusBadge.className = `status-badge ${p.approved ? "status-open" : "status-closed"}`;
         statusBadge.textContent = p.approved ? "Approved" : "Pending";
-        statusTd.appendChild(statusBadge);
-        row.appendChild(statusTd);
+        tdStatus.appendChild(statusBadge);
+        row.appendChild(tdStatus);
         
-        // Actions
-        const actionTd = document.createElement("td");
-        actionTd.className = "actions-cell";
+        // Actions column with larger buttons
+        const tdAction=document.createElement("td");
+        tdAction.className="actions-cell";
         
-        // Only show approve button for pending passengers
-        if (!p.approved) {
-            const approveBtn = document.createElement("button");
-            approveBtn.className = "icon-btn approve-btn";
-            approveBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-            approveBtn.title = "Approve passenger";
-            approveBtn.onclick = async () => {
+        // Only show save button for unapproved passengers
+        if (p.approved !== true) {
+            const saveBtn=document.createElement("button");
+            saveBtn.className="icon-btn save-btn";
+            saveBtn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>`;
+            saveBtn.title="Save/Approve passenger";
+            saveBtn.onclick=async ()=>{
                 try {
-                    await db.collection("passengers").doc(p.id).update({approved: true});
-                    showNotification("Passenger approved successfully", "success");
+                    const flightStatus = await getFlightStatus(p.flightNo, p.date);
+                    if(flightStatus==="Closed"){alert("Flight is closed."); return;}
+                    await db.collection("passengers").doc(p.id).update({approved:true});
+                    // The real-time listener will handle the update
                 } catch (error) {
                     console.error("Error approving passenger:", error);
-                    showNotification("Error approving passenger", "error");
                 }
             };
-            actionTd.appendChild(approveBtn);
+            tdAction.appendChild(saveBtn);
         }
         
-        // Delete button
-        const deleteBtn = document.createElement("button");
-        deleteBtn.className = "icon-btn delete-btn";
-        deleteBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
-        deleteBtn.title = "Delete passenger";
-        deleteBtn.onclick = async () => {
-            if (confirm("Are you sure you want to delete this passenger?")) {
+        const deleteBtn=document.createElement("button");
+        deleteBtn.className="icon-btn delete-btn";
+        deleteBtn.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
+        deleteBtn.title="Delete passenger";
+        deleteBtn.onclick=async ()=>{
+            if(confirm("Are you sure?")){
                 try {
-                    await db.collection("passengers").doc(p.id).delete();
-                    showNotification("Passenger deleted successfully", "success");
+                    await db.collection("passengers").doc(p.id).delete(); 
                 } catch (error) {
                     console.error("Error deleting passenger:", error);
-                    showNotification("Error deleting passenger", "error");
                 }
             }
         };
-        actionTd.appendChild(deleteBtn);
-        
-        row.appendChild(actionTd);
+        tdAction.appendChild(deleteBtn);
+        row.appendChild(tdAction);
         tableBody.appendChild(row);
     });
 }
 
-// ---------- QR PARSER ----------
-function parseQR(code) {
-    code = code.trim().toUpperCase().replace(/\s+/g, ' ');
-    let name = "", flightNo = "", seatNo = "";
-    const allParts = code.split(' ');
+function updateTotal(){
+    paxCount.textContent=filteredPassengerList.reduce((sum,p)=>sum+(p.numPax||1),0);
+}
+
+function updateStats(){
+    const today = new Date().toISOString().split("T")[0];
+    const todayPassengersList = passengerList.filter(p => p.date === today);
+    const pendingList = passengerList.filter(p => p.approved !== true);
+    const uniqueFlights = [...new Set(passengerList.map(p => p.flightNo))];
     
-    if (code.startsWith("TKVCPO")) {
+    totalPassengers.textContent = passengerList.reduce((sum,p)=>sum+(p.numPax||1),0);
+    todayPassengers.textContent = todayPassengersList.reduce((sum,p)=>sum+(p.numPax||1),0);
+    activeFlights.textContent = uniqueFlights.length;
+    pendingApprovals.textContent = pendingList.length;
+}
+
+function populateAirlineFilter(){
+    const airlines = [...new Set(passengerList.map(p => p.airline))];
+    airlineFilter.innerHTML = '<option value="all">All Airlines</option>';
+    airlines.forEach(airline => {
+        const option = document.createElement("option");
+        option.value = airline;
+        option.textContent = airline;
+        airlineFilter.appendChild(option);
+    });
+}
+
+// ---------- QR PARSER ----------
+function parseQR(code){
+    code = code.trim().toUpperCase().replace(/\s+/g,' ');
+    let name="", flightNo="", seatNo="";
+    const allParts = code.split(' ');
+    if(code.startsWith("TKVCPO")){
         const tkIndex = code.indexOf("TK0");
-        if (tkIndex != -1) { 
-            flightNo = code.substring(tkIndex, tkIndex + 6); 
+        if(tkIndex!=-1){ 
+            flightNo = code.substring(tkIndex, tkIndex+6); 
             name = code.substring(6, tkIndex).trim();
         }
         const mlePos = code.indexOf("MLE");
-        if (mlePos != -1) { 
+        if(mlePos!=-1){ 
             const afterMLE = code.substring(mlePos).split(' ')[0]; 
-            if (afterMLE.length >= 11) seatNo = afterMLE.substring(8, 11); 
+            if(afterMLE.length>=11) seatNo = afterMLE.substring(8,11); 
         }
     } else {
         name = allParts[0].substring(2);
-        const mleIndex = allParts.findIndex(w => w.includes("MLE"));
-        if (mleIndex != -1) {
+        const mleIndex = allParts.findIndex(w=>w.includes("MLE"));
+        if(mleIndex!=-1){
             const mleWord = allParts[mleIndex];
-            const nextWord = (mleIndex + 1 < allParts.length) ? allParts[mleIndex + 1] : "";
-            flightNo = mleWord.slice(-2) + nextWord;
-            const partsAfterMLE = allParts.slice(mleIndex + 1);
-            for (let w of partsAfterMLE) { 
-                if (w.length >= 9 && !w.includes("QR") && !w.includes("MLE")) { 
-                    seatNo = w.substring(5, w.length - 4); 
+            const nextWord = (mleIndex+1<allParts.length)?allParts[mleIndex+1]:"";
+            flightNo = mleWord.slice(-2)+nextWord;
+            const partsAfterMLE = allParts.slice(mleIndex+1);
+            for(let w of partsAfterMLE){ 
+                if(w.length>=9 && !w.includes("QR") && !w.includes("MLE")){ 
+                    seatNo = w.substring(5,w.length-4); 
                     break; 
                 }
             }
         }
     }
-    
     return {name, flightNo, seatNo};
 }
 
-// ---------- Clear form fields ----------
-function clearFormFields() {
-    nameField.value = "";
-    seatField.value = "";
-    flightField.value = "";
-    airlineField.value = "";
-    fqtvField.value = "";
-    serialField.value = "";
-    remarksField.value = "";
-    numPaxField.value = 1;
-    qrInput.value = "";
-    
-    // Keep current date
-    form.date.value = today;
-    
-    qrInput.focus();
+// ---------- Fetch flight status ----------
+async function getFlightStatus(flightNo, date){
+    try {
+        const snapshot = await db.collection("flightInfo")
+            .where("flightNo","==",flightNo)
+            .where("date","==",date)
+            .limit(1).get();
+        if(!snapshot.empty){
+            return snapshot.docs[0].data().status || "Open";
+        }
+        return "Open";
+    } catch (error) {
+        console.error("Error fetching flight status:", error);
+        return "Open";
+    }
 }
 
-// ---------- Add passenger ----------
-async function addPassenger() {
-    if (!nameField.value || !seatField.value || !flightField.value) {
-        showNotification("Name, Seat, and Flight Number are required", "error");
+// ---------- Add passenger automatically (for QR entries) ----------
+async function addPassengerAutomatically(){
+    if(!nameField.value || !seatField.value || !flightField.value) {
+        return;
+    }
+
+    if (!isShiftOpen) {
+        alert("Cannot add passenger. No shift is currently open.");
+        return;
+    }
+
+    const flightStatus = await getFlightStatus(flightField.value, form.date.value);
+    if(flightStatus === "Closed"){
+        alert("Selected flight is closed. You can add the passenger, but cannot approve until reopened.");
+    }
+
+    // Duplicate check
+    const snapshot = await db.collection("passengers")
+        .where("name","==",nameField.value)
+        .where("seatNo","==",seatField.value)
+        .where("flightNo","==",flightField.value)
+        .where("date","==",form.date.value)
+        .get();
+    if(!snapshot.empty) {
+        alert("Duplicate passenger in database!");
         return;
     }
 
@@ -1023,47 +1024,108 @@ async function addPassenger() {
     const now = new Date();
     const timeAdded = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-    // Determine if passenger should be auto-approved
-    // Auto-approve if it's a manual entry with serial number
-    const shouldAutoApprove = !isQREntry && serialField.value.trim() !== "";
-
     const passenger = {
         date: form.date.value,
+        shift: currentShift,
         flightNo: flightField.value,
         airline: airlineField.value,
         name: nameField.value,
         seatNo: seatField.value,
-        fqtv: fqtvField.value,
-        serial: serialField.value,
-        remarks: remarksField.value,
+        fqtv: document.getElementById("fqtv").value,
+        serial: document.getElementById("serial").value,
+        remarks: document.getElementById("remarks").value,
         numPax: parseInt(numPaxField.value) || 1,
         timeAdded: timeAdded,
-        approved: shouldAutoApprove // Auto-approve manual entries with serial numbers
+        approved: false
     };
 
-    try {
-        await db.collection("passengers").add(passenger);
-        
-        if (shouldAutoApprove) {
-            showNotification("Passenger added and auto-approved (has serial number)", "success");
-        } else {
-            showNotification("Passenger added successfully", "success");
-        }
-        
-        // Clear form fields after successful save
-        clearFormFields();
-        
-    } catch (error) {
-        console.error("Error adding passenger:", error);
-        showNotification("Error adding passenger", "error");
-    }
+    await db.collection("passengers").add(passenger);
+
+    // Reset form but keep date and shift
+    nameField.value = "";
+    seatField.value = "";
+    flightField.value = "";
+    airlineField.value = "";
+    document.getElementById("fqtv").value = "";
+    document.getElementById("serial").value = "";
+    document.getElementById("remarks").value = "";
+    numPaxField.value = 1;
+    
+    qrInput.focus();
+    
+    showQRScanFeedback("Passenger added automatically from QR scan");
 }
 
-// ---------- Airline detection ----------
-function getAirline(flightNo) {
-    if (!flightNo || flightNo.length < 2) return "Unknown";
+// ---------- Add passenger manually (requires save button) ----------
+async function addPassengerManually(){
+    if(!nameField.value || !seatField.value || !flightField.value) {
+        alert("Name, Seat, and Flight Number are required fields.");
+        return;
+    }
+
+    if (!isShiftOpen) {
+        alert("Cannot add passenger. No shift is currently open.");
+        return;
+    }
+
+    const flightStatus = await getFlightStatus(flightField.value, form.date.value);
+    if(flightStatus === "Closed"){
+        alert("Selected flight is closed. You can add the passenger, but cannot approve until reopened.");
+    }
+
+    // Duplicate check
+    const snapshot = await db.collection("passengers")
+        .where("name","==",nameField.value)
+        .where("seatNo","==",seatField.value)
+        .where("flightNo","==",flightField.value)
+        .where("date","==",form.date.value)
+        .get();
+    if(!snapshot.empty) {
+        alert("Duplicate passenger in database!");
+        return;
+    }
+
+    // Get current time in 24-hour format
+    const now = new Date();
+    const timeAdded = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+    const passenger = {
+        date: form.date.value,
+        shift: currentShift,
+        flightNo: flightField.value,
+        airline: airlineField.value,
+        name: nameField.value,
+        seatNo: seatField.value,
+        fqtv: document.getElementById("fqtv").value,
+        serial: document.getElementById("serial").value,
+        remarks: document.getElementById("remarks").value,
+        numPax: parseInt(numPaxField.value) || 1,
+        timeAdded: timeAdded,
+        approved: false
+    };
+
+    await db.collection("passengers").add(passenger);
+
+    // Reset form but keep date and shift
+    nameField.value = "";
+    seatField.value = "";
+    flightField.value = "";
+    airlineField.value = "";
+    document.getElementById("fqtv").value = "";
+    document.getElementById("serial").value = "";
+    document.getElementById("remarks").value = "";
+    numPaxField.value = 1;
     
-    const airlineCode = flightNo.substring(0, 2).toUpperCase();
+    qrInput.focus();
+    
+    showQRScanFeedback("Passenger added manually");
+}
+
+// Enhanced airline detection with IATA codes
+function getAirline(flightNo){
+    if(!flightNo || flightNo.length<2) return "Unknown";
+    
+    const airlineCode = flightNo.substring(0,2).toUpperCase();
     
     const iataAirlines = {
         "BA": "British Airways",
@@ -1110,83 +1172,134 @@ function getAirline(flightNo) {
     return iataAirlines[airlineCode] || "Unknown";
 }
 
-// ---------- Notification ----------
-function showNotification(message, type) {
-    const notification = document.getElementById("notification");
-    notification.textContent = message;
-    notification.className = `notification ${type}`;
-    notification.classList.add("show");
+function showQRScanFeedback(message) {
+    const feedback = document.createElement('div');
+    feedback.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: var(--success);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 6px;
+        z-index: 1000;
+        font-size: 14px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    `;
+    feedback.textContent = message;
+    document.body.appendChild(feedback);
     
     setTimeout(() => {
-        notification.classList.remove("show");
+        document.body.removeChild(feedback);
     }, 3000);
 }
 
-// ---------- Event Listeners ----------
-
 // Manual QR input handling
 qrInput.addEventListener("change", () => {
-    if (!qrInput.value.trim()) return;
+    if(!qrInput.value.trim()) return;
     
     isQREntry = true;
     
     const parsed = parseQR(qrInput.value);
     
-    if (parsed.name) nameField.value = parsed.name;
-    if (parsed.flightNo) {
+    console.log("Manual QR parsed:", parsed);
+    
+    if(parsed.name) nameField.value = parsed.name;
+    if(parsed.flightNo) {
         flightField.value = parsed.flightNo;
         airlineField.value = getAirline(parsed.flightNo);
     }
-    if (parsed.seatNo) seatField.value = parsed.seatNo;
+    if(parsed.seatNo) seatField.value = parsed.seatNo;
     
-    // Auto-submit after QR scan
     setTimeout(() => {
-        addPassenger();
+        addPassengerAutomatically();
     }, 500);
+    
+    qrInput.value = '';
 });
 
 // On flightNo input, update airline automatically
-flightField.addEventListener("input", () => {
+flightField.addEventListener("input", ()=>{
     const airline = getAirline(flightField.value);
     airlineField.value = airline;
+    console.log("Flight number:", flightField.value, "Airline:", airline);
 });
 
-// Form submit
-form.addEventListener("submit", async e => {
+// Form submit - for manual entries only
+form.addEventListener("submit", async e=>{
     e.preventDefault();
     isQREntry = false;
-    await addPassenger();
+    await addPassengerManually();
 });
 
 // Clear form button
 clearBtn.addEventListener("click", () => {
-    clearFormFields();
+    form.reset();
+    form.date.value = today;
+    airlineField.value = "";
     isQREntry = false;
 });
 
-// Floating button event listeners
-dashboardBtn.addEventListener("click", () => {
-    window.location.href = "dashboard.html";
+// Filter functionality
+searchInput.addEventListener("input", applyAdditionalFilters);
+applyDateFilter.addEventListener("click", applyAdditionalFilters);
+shiftFilter.addEventListener("change", applyAdditionalFilters);
+airlineFilter.addEventListener("change", applyAdditionalFilters);
+statusFilter.addEventListener("change", () => {
+    currentStatusFilter = statusFilter.value;
+    applyStatusFilter();
 });
 
-reportBtn.addEventListener("click", () => {
-    window.location.href = "updateCard.html";
+// Export functionality
+exportBtn.addEventListener("click", () => {
+    const headers = ["Date", "Shift", "Airline", "Flight No", "Name", "Seat", "FQTV", "Serial", "Remarks", "No. of Pax", "Time Added", "Status"];
+    const csvContent = [
+        headers.join(","),
+        ...filteredPassengerList.map(p => [
+            p.date,
+            p.shift,
+            p.airline,
+            p.flightNo,
+            p.name,
+            p.seatNo,
+            p.fqtv,
+            p.serial,
+            p.remarks,
+            p.numPax,
+            p.timeAdded,
+            p.approved ? "Approved" : "Pending"
+        ].join(","))
+    ].join("\n");
+    
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "passengers.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 });
 
-// ---------- Initialization ----------
+// ---------- Initial fetch ----------
 fetchCurrentShift();
-fetchPendingPassengers();
+fetchPassengers();
 
 // Auto-refresh shift status every 10 seconds
 setInterval(fetchCurrentShift, 10000);
 
-// Real-time listener for pending passengers
+// Real-time listener for passengers
 db.collection("passengers")
-    .where("approved", "==", false)
     .orderBy("timeAdded", "desc")
     .onSnapshot((snapshot) => {
-        passengerList = snapshot.docs.map(doc => ({...doc.data(), id: doc.id}));
-        renderPassengers();
+        passengerList = snapshot.docs.map(doc => ({...doc.data(), id:doc.id}));
+        
+        // Apply current status filter to the updated data
+        applyStatusFilter();
+        
+        updateStats();
+        populateAirlineFilter();
     });
 </script>
 </body>
