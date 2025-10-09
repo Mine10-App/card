@@ -354,6 +354,84 @@
             border-left: 4px solid var(--secondary);
         }
         
+        /* Floating Action Buttons */
+        .floating-buttons {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 100;
+        }
+        
+        .floating-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .floating-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+        
+        .floating-btn.dashboard {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .floating-btn.report {
+            background: var(--secondary);
+            color: white;
+        }
+        
+        .floating-btn .tooltip {
+            position: absolute;
+            right: 70px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        
+        .floating-btn:hover .tooltip {
+            opacity: 1;
+        }
+        
+        /* Shift Status */
+        .shift-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 6px;
+            background: var(--white);
+            border: 1px solid var(--border);
+        }
+        
+        .shift-status.open {
+            background: rgba(16,185,129,0.1);
+            border: 1px solid var(--success);
+        }
+        
+        .shift-status.closed {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid var(--danger);
+        }
+        
         /* Responsive */
         @media (max-width: 1024px) {
             .main-content {
@@ -380,6 +458,16 @@
                 align-items: flex-start;
                 gap: 12px;
             }
+            
+            .floating-buttons {
+                bottom: 20px;
+                right: 20px;
+            }
+            
+            .floating-btn {
+                width: 50px;
+                height: 50px;
+            }
         }
     </style>
 </head>
@@ -396,8 +484,17 @@
             </div>
             <h1>Passenger Approval System</h1>
         </div>
-        <div class="shift-status">
-            <div id="shiftName">Loading shift status...</div>
+        <div class="shift-status" id="shiftStatus">
+            <div id="shiftIcon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </div>
+            <div>
+                <div id="shiftName">Loading shift status...</div>
+                <div id="shiftTime" style="font-size:11px; color:var(--text);"></div>
+            </div>
         </div>
     </header>
 
@@ -538,6 +635,30 @@
     </div>
 </div>
 
+<!-- Floating Action Buttons -->
+<div class="floating-buttons">
+    <div class="floating-btn dashboard" id="dashboardBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        <span class="tooltip">Dashboard</span>
+    </div>
+    <div class="floating-btn report" id="reportBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="7.5 4.21 12 6.81 16.5 4.21"></polyline>
+            <polyline points="7.5 19.79 7.5 14.6 3 12"></polyline>
+            <polyline points="21 12 16.5 14.6 16.5 19.79"></polyline>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+        <span class="tooltip">Airline Report</span>
+    </div>
+</div>
+
 <!-- Notification -->
 <div id="notification" class="notification"></div>
 
@@ -572,6 +693,10 @@ const remarksField = document.getElementById("remarks");
 const emptyState = document.getElementById("emptyState");
 const clearBtn = document.getElementById("clearBtn");
 const shiftName = document.getElementById("shiftName");
+const shiftStatus = document.getElementById("shiftStatus");
+const shiftTime = document.getElementById("shiftTime");
+const dashboardBtn = document.getElementById("dashboardBtn");
+const reportBtn = document.getElementById("reportBtn");
 
 // Set current date
 const today = new Date().toISOString().split("T")[0];
@@ -589,22 +714,73 @@ async function fetchCurrentShift() {
         const snapshot = await db.collection("shifts").limit(1).get();
         
         if (!snapshot.empty) {
+            const docRef = snapshot.docs[0].ref;
             const data = snapshot.docs[0].data();
             
+            // Handle date change if both shifts were closed yesterday
+            if (data.date !== today && 
+                data.shift1?.status === "Closed" && 
+                data.shift2?.status === "Closed") {
+
+                await docRef.update({
+                    date: today,
+                    "shift1.status": "Pending",
+                    "shift1.openedAt": "",
+                    "shift1.closedAt": "",
+                    "shift2.status": "Pending",
+                    "shift2.openedAt": "",
+                    "shift2.closedAt": ""
+                });
+
+                data.date = today;
+                data.shift1.status = "Pending";
+                data.shift2.status = "Pending";
+            }
+
             // Determine which shift is open
+            let shiftLabel = "No Shift Open";
+            let enableEntry = false;
+            let isActive = false;
+            let currentShift = "";
+            let shiftOpenedAt = "";
+
             if (data.shift1?.status === "Open") {
-                shiftName.textContent = "Morning Shift";
+                shiftLabel = "Morning Shift";
+                enableEntry = true;
+                isActive = true;
+                currentShift = "Morning";
+                shiftOpenedAt = data.shift1.openedAt || "";
             } else if (data.shift2?.status === "Open") {
-                shiftName.textContent = "Evening Shift";
+                shiftLabel = "Evening Shift";
+                enableEntry = true;
+                isActive = true;
+                currentShift = "Evening";
+                shiftOpenedAt = data.shift2.openedAt || "";
+            }
+
+            shiftName.textContent = shiftLabel;
+            
+            // Update shift time display
+            if (shiftOpenedAt) {
+                shiftTime.textContent = `Opened at: ${shiftOpenedAt}`;
             } else {
-                shiftName.textContent = "No Shift Open";
+                shiftTime.textContent = "";
+            }
+
+            // Update shift status display
+            if (isActive) {
+                shiftStatus.className = "shift-status open";
+            } else {
+                shiftStatus.className = "shift-status closed";
             }
         } else {
             shiftName.textContent = "No Shift Data";
+            shiftStatus.className = "shift-status closed";
         }
     } catch (error) {
         console.error("Error fetching shift status:", error);
         shiftName.textContent = "Error Loading Shift";
+        shiftStatus.className = "shift-status closed";
     }
 }
 
@@ -976,9 +1152,21 @@ clearBtn.addEventListener("click", () => {
     isQREntry = false;
 });
 
+// Floating button event listeners
+dashboardBtn.addEventListener("click", () => {
+    window.location.href = "dashboard.html";
+});
+
+reportBtn.addEventListener("click", () => {
+    window.location.href = "updateCard.html";
+});
+
 // ---------- Initialization ----------
 fetchCurrentShift();
 fetchPendingPassengers();
+
+// Auto-refresh shift status every 10 seconds
+setInterval(fetchCurrentShift, 10000);
 
 // Real-time listener for pending passengers
 db.collection("passengers")
